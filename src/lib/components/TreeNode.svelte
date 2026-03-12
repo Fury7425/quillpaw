@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FolderSimple, FileText } from '@phosphor-icons/svelte';
+  import { FolderSimple, FileText } from 'phosphor-svelte';
   import type { FileNode } from '$lib/types';
   import { setFocused, focusedPath } from '$lib/stores/vault';
   import { openNote } from '$lib/stores/editor';

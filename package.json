@@ -27,7 +27,7 @@
     "pdfjs-dist": "^4",
     "svelte": "^5",
     "@sveltejs/vite-plugin-svelte": "^5",
-    "@phosphor-icons/svelte": "^2"
+    "phosphor-svelte": "^3.0.1"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.6",

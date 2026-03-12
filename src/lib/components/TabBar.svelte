@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { X } from '@phosphor-icons/svelte';
+  import { X } from 'phosphor-svelte';
   import { openTabs, activePath, openNote, closeTab } from '$lib/stores/editor';
 </script>
 

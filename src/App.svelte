@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { PenNib, Minus, Square, X } from '@phosphor-icons/svelte';
+  import { PenNib, Minus, Square, X } from 'phosphor-svelte';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { get } from 'svelte/store';
 
