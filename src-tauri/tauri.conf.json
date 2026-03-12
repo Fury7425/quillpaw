@@ -20,9 +20,6 @@
     }
   },
   "bundle": {
-    "identifier": "app.quillpaw.desktop",
-    "productName": "Quillpaw",
-    "version": "1.0.0",
     "targets": ["nsis", "msi"]
   }
 }
