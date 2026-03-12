@@ -21,7 +21,7 @@
   import katex from 'katex';
   import 'katex/dist/katex.min.css';
   import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-  import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
+  import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
   import { noteBody, activeNote, updateBody, saveActiveNote, insertRequest } from '$lib/stores/editor';
   import { vaultPath } from '$lib/stores/vault';
