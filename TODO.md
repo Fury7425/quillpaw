@@ -1,10 +1,7 @@
-# Tauri Build Fix - Remove problematic dialog plugin, switch to core async dialog
+# Tauri v2 Build Fix Progress
 
-## Steps
-- [x] Step 1: Update src-tauri/Cargo.toml - Remove tauri-plugin-dialog dep, add "dialog-open" feature to tauri
-- [x] Step 2: Update src-tauri/src/lib.rs - Remove .plugin(tauri_plugin_dialog::init())
-- [x] Step 3: Update src-tauri/src/commands/fs_commands.rs - Remove plugin use/import, replace spawn_blocking folder picker with app.dialog().directory().pick_folder().await
-- [ ] Step 4: Verify Rust deps with `cd src-tauri && cargo check`
-- [ ] Step 5: Test full build with `npm run build`
-- [ ] Step 6: Test tauri build `cd src-tauri && cargo tauri build`
-
+- [x] **Understand issue**: Invalid `dialog-open` feature in Cargo.toml (Tauri v1 → v2 migration)
+- [x] **Edit src-tauri/Cargo.toml**: Remove invalid feature
+- [ ] **Test Rust build**: `cd src-tauri && cargo build --release`
+- [ ] **Verify full Tauri build**: `npm run tauri build` (if npm available) or manual
+- [ ] **Complete**: attempt_completion
