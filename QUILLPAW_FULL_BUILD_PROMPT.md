@@ -1,4 +1,4 @@
-# QUILLPAW â€” AI Coding Agent Master Prompt (Full Build V1â€“V4)
+# QUILLPAW ??AI Coding Agent Master Prompt (Full Build V1?“V4)
 ### Offline Academic Note-Taking App | Tauri + Rust + Svelte
 
 ---
@@ -8,15 +8,20 @@
 > It is self-contained. The agent has everything it needs to build the complete application.
 > Sections marked `[AGENT ACTION]` are explicit instructions to execute.
 > Sections marked `[SPEC]` are reference material the agent must follow throughout.
+> **NO-EXECUTION MODE (DO NOT RUN COMMANDS)**
+> This run must not execute shell commands or install dependencies.
+> Treat the repository as already scaffolded. If files or folders are missing,
+> create them manually to match the specified structure. Replace any Verify,
+> Compile check, or Build steps with static consistency checks only.
 >
-> **This prompt builds the entire application in one session â€” V1 through V4 â€” as a single
+> **This prompt builds the entire application in one session ??V1 through V4 ??as a single
 > continuous build sequence. Do not stop after any phase. Complete all 28 steps.**
 
 ---
 
 ## MISSION
 
-You are building **Quillpaw** â€” a Windows-first offline desktop academic note-taking application.
+You are building **Quillpaw** ??a Windows-first offline desktop academic note-taking application.
 
 It combines:
 - The **speed and local-file philosophy** of Obsidian
@@ -32,20 +37,20 @@ enhanced by local AI that the user explicitly controls.
 
 ## COMPLETE FEATURE SCOPE
 
-**V1 â€” Foundation**
+**V1 ??Foundation**
 Tauri v2 + Svelte 5 scaffold, three-panel layout, CodeMirror 6 editor, vault folder browser,
 note CRUD, file drag-and-drop, tantivy search, warm dark theme, keyboard shortcuts,
 command palette, settings panel.
 
-**V2 â€” Academic Blocks**
+**V2 ??Academic Blocks**
 LaTeX math (KaTeX), drawing canvas (Skia), block command system (/), callout blocks,
 fenced code with syntax highlighting and copy button, PDF inline viewer, table editor.
 
-**V3 â€” Local AI + Speech**
+**V3 ??Local AI + Speech**
 llama.cpp FFI, Phi-3 Mini model support, AI proposal panel, note summarization,
 contextual Q&A, deadline/reminder detection, whisper.cpp STT, live lecture transcription.
 
-**V4 â€” Semantic Search**
+**V4 ??Semantic Search**
 nomic-embed-text embedding pipeline, HNSW vector index (usearch), semantic natural-language
 search UI, tag suggestions, NPU scheduling for Intel Core Ultra hardware.
 
@@ -70,7 +75,7 @@ search UI, tag suggestions, NPU scheduling for Intel Core Ultra hardware.
 | Async Runtime     | tokio                         | Non-blocking IO and background tasks        |
 | Icons             | Phosphor Icons (npm)          | Consistent minimal academic aesthetic       |
 
-**CRITICAL RULES â€” NEVER VIOLATE:**
+**CRITICAL RULES ??NEVER VIOLATE:**
 - Do NOT use Electron. Tauri only.
 - Do NOT use React or Vue. Svelte only.
 - Do NOT use SQLite for notes. Notes are .md plain files only.
@@ -84,56 +89,56 @@ search UI, tag suggestions, NPU scheduling for Intel Core Ultra hardware.
 
 ```
 quillpaw/
-â”œâ”€â”€ src-tauri/
-â”‚   â”œâ”€â”€ src/
-â”‚   â”‚   â”œâ”€â”€ main.rs
-â”‚   â”‚   â”œâ”€â”€ commands/
-â”‚   â”‚   â”‚   â”œâ”€â”€ mod.rs
-â”‚   â”‚   â”‚   â”œâ”€â”€ fs_commands.rs
-â”‚   â”‚   â”‚   â”œâ”€â”€ search_commands.rs
-â”‚   â”‚   â”‚   â”œâ”€â”€ ai_commands.rs
-â”‚   â”‚   â”‚   â”œâ”€â”€ stt_commands.rs
-â”‚   â”‚   â”‚   â””â”€â”€ drawing_commands.rs
-â”‚   â”‚   â”œâ”€â”€ fs_manager.rs
-â”‚   â”‚   â”œâ”€â”€ search.rs
-â”‚   â”‚   â”œâ”€â”€ watcher.rs
-â”‚   â”‚   â”œâ”€â”€ ai_engine.rs
-â”‚   â”‚   â”œâ”€â”€ embeddings.rs
-â”‚   â”‚   â”œâ”€â”€ stt_engine.rs
-â”‚   â”‚   â”œâ”€â”€ drawing.rs
-â”‚   â”‚   â””â”€â”€ models.rs
-â”‚   â”œâ”€â”€ Cargo.toml
-â”‚   â””â”€â”€ tauri.conf.json
-â”œâ”€â”€ src/
-â”‚   â”œâ”€â”€ lib/
-â”‚   â”‚   â”œâ”€â”€ components/
-â”‚   â”‚   â”‚   â”œâ”€â”€ Editor.svelte
-â”‚   â”‚   â”‚   â”œâ”€â”€ FileTree.svelte
-â”‚   â”‚   â”‚   â”œâ”€â”€ AIPanel.svelte
-â”‚   â”‚   â”‚   â”œâ”€â”€ SearchModal.svelte
-â”‚   â”‚   â”‚   â”œâ”€â”€ CommandPalette.svelte
-â”‚   â”‚   â”‚   â”œâ”€â”€ TabBar.svelte
-â”‚   â”‚   â”‚   â”œâ”€â”€ Settings.svelte
-â”‚   â”‚   â”‚   â”œâ”€â”€ DrawingCanvas.svelte
-â”‚   â”‚   â”‚   â”œâ”€â”€ LectureMode.svelte
-â”‚   â”‚   â”‚   â””â”€â”€ ProposalCard.svelte
-â”‚   â”‚   â”œâ”€â”€ stores/
-â”‚   â”‚   â”‚   â”œâ”€â”€ vault.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ editor.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ ui.ts
-â”‚   â”‚   â”‚   â”œâ”€â”€ ai.ts
-â”‚   â”‚   â”‚   â””â”€â”€ stt.ts
-â”‚   â”‚   â””â”€â”€ utils/
-â”‚   â”‚       â”œâ”€â”€ tauri_bridge.ts
-â”‚   â”‚       â”œâ”€â”€ markdown.ts
-â”‚   â”‚       â””â”€â”€ shortcuts.ts
-â”‚   â”œâ”€â”€ app.css
-â”‚   â”œâ”€â”€ App.svelte
-â”‚   â””â”€â”€ main.ts
-â”œâ”€â”€ package.json
-â”œâ”€â”€ svelte.config.js
-â”œâ”€â”€ vite.config.ts
-â””â”€â”€ tailwind.config.js
+?œâ??€ src-tauri/
+??  ?œâ??€ src/
+??  ??  ?œâ??€ main.rs
+??  ??  ?œâ??€ commands/
+??  ??  ??  ?œâ??€ mod.rs
+??  ??  ??  ?œâ??€ fs_commands.rs
+??  ??  ??  ?œâ??€ search_commands.rs
+??  ??  ??  ?œâ??€ ai_commands.rs
+??  ??  ??  ?œâ??€ stt_commands.rs
+??  ??  ??  ?”â??€ drawing_commands.rs
+??  ??  ?œâ??€ fs_manager.rs
+??  ??  ?œâ??€ search.rs
+??  ??  ?œâ??€ watcher.rs
+??  ??  ?œâ??€ ai_engine.rs
+??  ??  ?œâ??€ embeddings.rs
+??  ??  ?œâ??€ stt_engine.rs
+??  ??  ?œâ??€ drawing.rs
+??  ??  ?”â??€ models.rs
+??  ?œâ??€ Cargo.toml
+??  ?”â??€ tauri.conf.json
+?œâ??€ src/
+??  ?œâ??€ lib/
+??  ??  ?œâ??€ components/
+??  ??  ??  ?œâ??€ Editor.svelte
+??  ??  ??  ?œâ??€ FileTree.svelte
+??  ??  ??  ?œâ??€ AIPanel.svelte
+??  ??  ??  ?œâ??€ SearchModal.svelte
+??  ??  ??  ?œâ??€ CommandPalette.svelte
+??  ??  ??  ?œâ??€ TabBar.svelte
+??  ??  ??  ?œâ??€ Settings.svelte
+??  ??  ??  ?œâ??€ DrawingCanvas.svelte
+??  ??  ??  ?œâ??€ LectureMode.svelte
+??  ??  ??  ?”â??€ ProposalCard.svelte
+??  ??  ?œâ??€ stores/
+??  ??  ??  ?œâ??€ vault.ts
+??  ??  ??  ?œâ??€ editor.ts
+??  ??  ??  ?œâ??€ ui.ts
+??  ??  ??  ?œâ??€ ai.ts
+??  ??  ??  ?”â??€ stt.ts
+??  ??  ?”â??€ utils/
+??  ??      ?œâ??€ tauri_bridge.ts
+??  ??      ?œâ??€ markdown.ts
+??  ??      ?”â??€ shortcuts.ts
+??  ?œâ??€ app.css
+??  ?œâ??€ App.svelte
+??  ?”â??€ main.ts
+?œâ??€ package.json
+?œâ??€ svelte.config.js
+?œâ??€ vite.config.ts
+?”â??€ tailwind.config.js
 ```
 
 ---
@@ -144,19 +149,19 @@ Rule: Notes are plain .md files. Never store note content in a database.
 
 ```
 Vault/
-  â”œâ”€â”€ Physics/
-  â”‚   â”œâ”€â”€ entropy.md
-  â”‚   â””â”€â”€ quantum.md
-  â””â”€â”€ .assets/
-      â”œâ”€â”€ images/
-      â”œâ”€â”€ drawings/        <- vector JSON files
-      â”œâ”€â”€ audio/           <- lecture recordings
-      â””â”€â”€ files/
+  ?œâ??€ Physics/
+  ??  ?œâ??€ entropy.md
+  ??  ?”â??€ quantum.md
+  ?”â??€ .assets/
+      ?œâ??€ images/
+      ?œâ??€ drawings/        <- vector JSON files
+      ?œâ??€ audio/           <- lecture recordings
+      ?”â??€ files/
 
 Vault/.quillpaw/
-  â”œâ”€â”€ index/               <- tantivy search index
-  â”œâ”€â”€ embeddings/          <- HNSW vector index
-  â””â”€â”€ config.json
+  ?œâ??€ index/               <- tantivy search index
+  ?œâ??€ embeddings/          <- HNSW vector index
+  ?”â??€ config.json
 ```
 
 Note frontmatter format:
@@ -175,7 +180,7 @@ File write rules: atomic writes (.md.tmp then rename). Always UTF-8. Never corru
 
 ---
 
-## [SPEC] COMPLETE RUST BACKEND â€” ALL TAURI COMMANDS
+## [SPEC] COMPLETE RUST BACKEND ??ALL TAURI COMMANDS
 
 All commands async, return Result<T, String>.
 
@@ -281,12 +286,12 @@ pub struct AiProposal {
 
 ---
 
-## [SPEC] VISUAL DESIGN â€” DARK WARM THEME
+## [SPEC] VISUAL DESIGN ??DARK WARM THEME
 
 Quillpaw's aesthetic is dark but warm. A candlelit scholar's den at midnight.
 Deep warm browns, amber accents, parchment-toned text. Never cold. Never sterile.
 
-### CSS Variables â€” implement exactly in app.css
+### CSS Variables ??implement exactly in app.css
 
 ```css
 :root {
@@ -347,7 +352,7 @@ Line numbers --text-muted. Active line rgba(201,132,58,0.04). Brackets --accent-
 
 ---
 
-## [SPEC] EDITOR â€” FULL FEATURE SET
+## [SPEC] EDITOR ??FULL FEATURE SET
 
 Standard markdown: H1-H6, bold, italic, strikethrough, inline code, lists, blockquotes,
 footnotes, tables, fenced code, links [text](url), wiki-links [[note-title]], images ![[file]].
@@ -388,7 +393,7 @@ Live results 150ms debounce. Arrow key navigation. Folder filter toggles.
 
 ---
 
-## [SPEC] AI SYSTEM â€” PROPOSAL CONTRACT
+## [SPEC] AI SYSTEM ??PROPOSAL CONTRACT
 
 THE RULE:
   1. User explicitly triggers AI (button or command)
@@ -556,105 +561,107 @@ Complete all 28 steps before finishing.
 
 ---
 
-### PHASE 1 â€” FOUNDATION (V1)
+### PHASE 1 ??FOUNDATION (V1)
 
-#### Step 1 â€” Scaffold
-  npm create tauri-app@latest quillpaw -- --template svelte-ts
-  cd quillpaw && npm install
-Verify app opens with "cargo tauri dev" before continuing.
+#### Step 1 ??Scaffold (No-Run)
+  Do NOT run scaffolding commands. If the repo is missing files, create them
+  manually so it matches the Project Structure spec. Ensure core config files
+  (package.json, src-tauri/Cargo.toml, tauri.conf.json, svelte/vite configs)
+  align with the specs below. Do not run cargo/tauri/dev commands.
 
-#### Step 2 â€” Install all dependencies
-Install all packages from Cargo.toml and package.json specs above. Verify cargo build succeeds.
+#### Step 2 ??Dependencies (No-Install)
+Do NOT install packages. Make sure Cargo.toml and package.json match the specs above.
+Do not run cargo build or any install commands.
 
-#### Step 3 â€” Design system
+#### Step 3 ??Design system
 Create src/app.css with all CSS variables. Import Google Fonts (Literata, Lora, JetBrains Mono).
 Configure TailwindCSS v4 to reference the CSS variables.
 
-#### Step 4 â€” Layout shell
+#### Step 4 ??Layout shell
 Build App.svelte: three-panel layout, custom title bar (draggable, Quillpaw wordmark with
 PenNib icon, custom window buttons), placeholder panels, status bar.
 
-#### Step 5 â€” Rust file system layer
+#### Step 5 ??Rust file system layer
 Implement all commands in fs_commands.rs. Register in main.rs. Verify each command works.
 
-#### Step 6 â€” Vault onboarding
+#### Step 6 ??Vault onboarding
 First-launch welcome screen: Quillpaw logo with warm amber glow, tagline "Your notes.
 Your machine. Your den." Open Vault / Create Vault buttons. Persist via tauri-plugin-store.
 
-#### Step 7 â€” File tree
+#### Step 7 ??File tree
 FileTree.svelte: collapsible folders, file icons, amber selected state (3px left border +
 --accent-subtle), right-click context menu (New Note, New Folder, Rename, Delete),
 file watcher refresh via watcher.rs.
 
-#### Step 8 â€” Editor (core)
+#### Step 8 ??Editor (core)
 Editor.svelte: CodeMirror 6 with custom warm dark theme, full markdown, [[wiki-link]]
 highlighting, inline ![[image]] rendering, 800ms auto-save, unsaved dot indicator.
 
-#### Step 9 â€” Tab bar
+#### Step 9 ??Tab bar
 TabBar.svelte: open note tabs, close buttons, amber unsaved dot, Ctrl+Tab navigation.
 
-#### Step 10 â€” Keyword search
+#### Step 10 ??Keyword search
 tantivy index in search.rs. Hook to vault open and file watcher. SearchModal.svelte with
 live results, snippets, folder filters. Trigger Ctrl+Shift+F.
 
-#### Step 11 â€” Command palette
+#### Step 11 ??Command palette
 CommandPalette.svelte: Ctrl+P, fuzzy search over notes and commands, keyboard navigable.
 
-#### Step 12 â€” Settings panel
+#### Step 12 ??Settings panel
 Settings.svelte slide-in drawer. All sections present. AI and STT disabled with "coming
 in a later step" state until built.
 
-#### Step 13 â€” V1 polish
+#### Step 13 ??V1 polish
 All keyboard shortcuts. Drag-and-drop file import. Status bar word/tag count. F2 inline
 rename. Warm confirm dialog before delete. Smooth panel resize.
 
-COMPILE CHECK: Verify all V1 features work before proceeding to Phase 2.
+CONSISTENCY CHECK: Do not run builds. Ensure V1 code paths and config are internally consistent before proceeding to Phase 2.
 
 ---
 
-### PHASE 2 â€” ACADEMIC BLOCKS (V2)
+### PHASE 2 ??ACADEMIC BLOCKS (V2)
 
-#### Step 14 â€” LaTeX math
+#### Step 14 ??LaTeX math
 CodeMirror extension for $...$ and $$...$$ rendered inline via KaTeX. Updates as user
 types, under 10ms latency.
 
-#### Step 15 â€” Enhanced code blocks
+#### Step 15 ??Enhanced code blocks
 Per-language syntax highlighting via CodeMirror language-data. Copy button on hover
 (top-right). Language label (top-left).
 
-#### Step 16 â€” Drawing canvas
+#### Step 16 ??Drawing canvas
 drawing.rs Rust backend via rust-skia. DrawingCanvas.svelte with all drawing tools from
 the Drawing spec. Auto-saves to .assets/drawings/ as JSON. Inline rendering via
 ![[drawing.json]]. Undo/redo Ctrl+Z/Ctrl+Y.
 
-#### Step 17 â€” Block command system
+#### Step 17 ??Block command system
 / at line start opens floating mini-palette. Implement all block commands from the
 Block Commands spec.
 
-#### Step 18 â€” Callout blocks
+#### Step 18 ??Callout blocks
 Parse > [!note], > [!warning], > [!tip], > [!important]. Render as colored callout boxes
 with Phosphor icons and warm-tinted backgrounds per type.
 
-#### Step 19 â€” PDF inline viewer
+#### Step 19 ??PDF inline viewer
 PDF.js integration. /pdf command: file picker -> copy to .assets/files/ -> insert
 ![[filename.pdf]] -> inline viewer with scroll and zoom.
 
-COMPILE CHECK: Drawing saves/loads, LaTeX renders, PDF embeds. Before proceeding.
+CONSISTENCY CHECK: Do not run builds. Ensure drawing, LaTeX, and PDF paths are wired consistently before proceeding.
 
 ---
 
-### PHASE 3 â€” LOCAL AI + SPEECH (V3)
+### PHASE 3 ??LOCAL AI + SPEECH (V3)
 
-#### Step 20 â€” AI engine backend
+#### Step 20 ??AI engine backend
 ai_engine.rs with llama-cpp-2. Load/unload GGUF models. Implement all ai_commands.rs
 commands. Enforce proposal contract: AI commands return only AiProposal structs.
 apply_ai_proposal is the only function writing AI output to disk.
 
-#### Step 21 â€” AI panel
+#### Step 21 ??AI panel
 Full AIPanel.svelte: Proposals, Summarize, Ask, Reminders, Tag Suggestions, Model Status.
 Proposal cards: amber left border, --accent-glow background, Accept/Edit/Dismiss buttons.
 
-#### Step 22 â€” AI features
+#### Step 22 ??AI features
 Wire all four capabilities:
 - Summarize button -> summarize_note -> proposal card
 - Q&A text input -> ask_question -> proposal with source note links
@@ -662,35 +669,35 @@ Wire all four capabilities:
   Windows notifications via tauri-plugin-notification
 - Tag suggestions button -> suggest_tags -> proposal card
 
-#### Step 23 â€” Model downloader
+#### Step 23 ??Model downloader
 Settings: Download Phi-3 Mini and Qwen2.5 1.5B buttons. Background download with progress
 bar. User must click to start. Models in {vault}/.quillpaw/models/. Auto-populate path.
 
-#### Step 24 â€” STT engine and lecture mode
+#### Step 24 ??STT engine and lecture mode
 stt_engine.rs: cpal audio capture -> 16kHz resample (rubato) -> silero-vad (ort) ->
 whisper-rs -> emit stt-text-chunk Tauri events. LectureMode.svelte docked bar above editor.
 Text appends to note at cursor. Trigger Ctrl+Shift+L. Audio saved to .assets/audio/.
 
-COMPILE CHECK: AI loads, full proposal flow works, STT transcribes in real time.
+CONSISTENCY CHECK: Do not run builds. Ensure AI/STT wiring and proposal flow are internally consistent.
 
 ---
 
-### PHASE 4 â€” SEMANTIC SEARCH (V4)
+### PHASE 4 ??SEMANTIC SEARCH (V4)
 
-#### Step 25 â€” Embedding pipeline
+#### Step 25 ??Embedding pipeline
 embeddings.rs: load nomic-embed-text-v1.5 GGUF via llama-cpp-2 embedding mode.
 Batch-compute embeddings for all vault notes during CPU idle (tokio, <30% CPU throttle).
 Cache keyed by note path + modification time. Store in .quillpaw/embeddings/.
 
-#### Step 26 â€” HNSW vector index
+#### Step 26 ??HNSW vector index
 usearch HNSW index over stored embeddings. Persist to .quillpaw/embeddings/hnsw.bin.
 search_semantic: embed query -> nearest-neighbor -> return top-10 with cosine similarity.
 
-#### Step 27 â€” Semantic search UI
+#### Step 27 ??Semantic search UI
 Semantic tab in SearchModal.svelte. Natural language input. Results with similarity score.
 Smart Search mode merging keyword and semantic results. Trigger Ctrl+Shift+S.
 
-#### Step 28 â€” NPU scheduling and tag suggestions
+#### Step 28 ??NPU scheduling and tag suggestions
 Detect Intel Core Ultra NPU via Windows WMI. If present, prefer NPU execution provider
 in llama-cpp-2. AI mode "Low (NPU)" routes all inference to NPU only.
 Wire suggest_tags: use embedding similarity to find related notes, extract common tags,
@@ -703,13 +710,13 @@ propose as AiProposal.
 Verify every item before finishing:
 
   [ ] No internet calls in core code (model download only, user-triggered)
-  [ ] No database for note content â€” plain .md files only
+  [ ] No database for note content ??plain .md files only
   [ ] AI NEVER writes to disk without user clicking Accept
-  [ ] All Rust file operations async â€” no blocking IO
+  [ ] All Rust file operations async ??no blocking IO
   [ ] App fully functional with AI disabled
   [ ] All user data inside user-chosen vault folder
   [ ] Telemetry OFF by default, never silently enabled
-  [ ] All UI colors use CSS variables â€” no hardcoded hex in components
+  [ ] All UI colors use CSS variables ??no hardcoded hex in components
   [ ] apply_ai_proposal is the only path writing AI output to disk
 
 ---
@@ -721,9 +728,12 @@ Verify every item before finishing:
 - Comment all public Rust functions with /// doc comments.
 - TypeScript strict mode on in tsconfig.json.
 - Error handling: Rust returns Result<T, String>. Frontend shows warm amber toast on error.
-- Compile and verify after steps 13, 19, 24, and 28. Fix all errors before moving on.
-- Git commit after each numbered step if using git.
+- Do not compile or run commands. Perform static consistency checks after steps 13, 19, 24, and 28 and note any missing glue or dependencies.
+- Do not run git commands. If desired, list intended commit messages instead.
 - "Quillpaw" everywhere: window title, bundle ID app.quillpaw.desktop, config folder
   .quillpaw/, all user-facing strings.
 
 Begin with Step 1. Do not stop until Step 28 is complete.
+
+
+

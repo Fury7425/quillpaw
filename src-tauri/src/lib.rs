@@ -13,6 +13,7 @@ use commands::{
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+/// Run the Tauri application.
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -32,10 +33,14 @@ pub fn run() {
             import_asset,
             resolve_asset,
             build_search_index,
+            build_embeddings,
             search_notes,
             search_semantic,
             load_ai_model,
             unload_ai_model,
+            get_ai_status,
+            detect_npu,
+            download_ai_model,
             summarize_note,
             ask_question,
             detect_reminders,
@@ -45,6 +50,7 @@ pub fn run() {
             stop_lecture_mode,
             list_audio_devices,
             set_audio_device,
+            set_stt_model_path,
             render_drawing_png,
             save_drawing,
             load_drawing

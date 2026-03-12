@@ -36,3 +36,12 @@ pub struct AiProposal {
     pub target_path: Option<String>,
     pub metadata: Option<serde_json::Value>,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AiModelStatus {
+    pub loaded: bool,
+    pub model_path: Option<String>,
+    pub device_mode: String,
+    pub npu_available: bool,
+    pub detail: String,
+}
