@@ -45,6 +45,13 @@
     contextNode = null;
   };
 
+  const handlePanelKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      closeContext();
+    }
+  };
+
   const parentFolder = (path: string) => {
     const parts = path.split(/[/\\]/);
     parts.pop();
@@ -94,7 +101,13 @@
   };
 </script>
 
-<div class="panel" on:click={closeContext}>
+<div
+  class="panel"
+  role="button"
+  tabindex="0"
+  on:click={closeContext}
+  on:keydown={handlePanelKeydown}
+>
   <div class="header">
     <h3>Vault</h3>
     {#if $focusedPath}

@@ -163,10 +163,12 @@
       <div class="colors">
         {#each colors as swatch, index}
           <button
+            type="button"
             class={`swatch ${color === swatch ? 'active' : ''}`}
             style={`background:var(${colorVars[index]})`}
+            aria-label={`Select color ${index + 1}`}
             on:click={() => (color = swatch)}
-          />
+          ></button>
         {/each}
       </div>
       <div class="tools">
@@ -189,7 +191,7 @@
         on:pointermove={moveStroke}
         on:pointerup={endStroke}
         on:pointerleave={endStroke}
-      />
+      ></canvas>
     </div>
   </div>
 {/if}

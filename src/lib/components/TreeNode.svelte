@@ -8,16 +8,28 @@
   export let expanded: Set<string>;
   export let toggleFolder: (path: string) => void;
   export let onContext: (event: MouseEvent, node: FileNode) => void;
+
+  const activate = () => {
+    setFocused(node.path, node.is_folder);
+    if (!node.is_folder) openNote(node.path);
+    if (node.is_folder) toggleFolder(node.path);
+  };
+
+  const handleKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      activate();
+    }
+  };
 </script>
 
 <div class="node">
   <div
     class={`row ${node.path === $focusedPath ? 'active' : ''}`}
-    on:click={() => {
-      setFocused(node.path, node.is_folder);
-      if (!node.is_folder) openNote(node.path);
-      if (node.is_folder) toggleFolder(node.path);
-    }}
+    role="button"
+    tabindex="0"
+    on:click={activate}
+    on:keydown={handleKeydown}
     on:contextmenu={(event) => onContext(event, node)}
   >
     {#if node.is_folder}

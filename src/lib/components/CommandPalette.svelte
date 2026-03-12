@@ -56,11 +56,38 @@
     query = '';
     dispatch('close');
   };
+
+  const handleBackdropKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      closeCommand();
+    }
+  };
+
+  const handleModalKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeCommand();
+    }
+  };
 </script>
 
 {#if open}
-  <div class="backdrop" on:click={closeCommand}>
-    <div class="modal" on:click|stopPropagation>
+  <div
+    class="backdrop"
+    role="button"
+    tabindex="0"
+    on:click={closeCommand}
+    on:keydown={handleBackdropKeydown}
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      tabindex="0"
+      on:click|stopPropagation
+      on:keydown|stopPropagation={handleModalKeydown}
+    >
       <input placeholder="Type a command" bind:value={query} />
       <div class="list">
         {#each filtered as cmd}

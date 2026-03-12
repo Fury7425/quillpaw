@@ -212,7 +212,13 @@
   {#if $uiState.leftOpen}
     <aside class="left">
       <FileTree />
-      <div class="resizer" on:pointerdown={(event) => startResize('left', event)}></div>
+      <div
+        class="resizer"
+        role="separator"
+        aria-orientation="vertical"
+        tabindex="0"
+        on:pointerdown={(event) => startResize('left', event)}
+      ></div>
     </aside>
   {/if}
 
@@ -226,7 +232,13 @@
 
   {#if $uiState.rightOpen}
     <aside class="right">
-      <div class="resizer" on:pointerdown={(event) => startResize('right', event)}></div>
+      <div
+        class="resizer"
+        role="separator"
+        aria-orientation="vertical"
+        tabindex="0"
+        on:pointerdown={(event) => startResize('right', event)}
+      ></div>
       <AIPanel />
     </aside>
   {/if}

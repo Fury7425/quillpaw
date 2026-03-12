@@ -177,10 +177,10 @@
 
     <section>
       <h4>General</h4>
-      <label>Vault Path</label>
-      <input value={$vaultPath || ''} placeholder="Select a vault" disabled />
-      <label>Theme</label>
-      <select>
+      <label for="vault-path">Vault Path</label>
+      <input id="vault-path" value={$vaultPath || ''} placeholder="Select a vault" disabled />
+      <label for="theme-select">Theme</label>
+      <select id="theme-select">
         <option>Dark Warm</option>
         <option>Dark Cool</option>
         <option>Light Parchment</option>
@@ -189,25 +189,26 @@
 
     <section>
       <h4>Editor</h4>
-      <label>Auto-save delay (ms)</label>
-      <input type="number" value="800" />
-      <label>Line numbers</label>
-      <input type="checkbox" checked />
-      <label>Focus mode</label>
-      <input type="checkbox" />
+      <label for="autosave-delay">Auto-save delay (ms)</label>
+      <input id="autosave-delay" type="number" value="800" />
+      <label for="line-numbers">Line numbers</label>
+      <input id="line-numbers" type="checkbox" checked />
+      <label for="focus-mode">Focus mode</label>
+      <input id="focus-mode" type="checkbox" />
     </section>
 
     <section>
       <h4>AI</h4>
       <p class="muted">{$aiStatus}</p>
-      <label>Model Path</label>
-      <input value={$aiModelPath} placeholder="No model selected" disabled />
+      <label for="ai-model-path">Model Path</label>
+      <input id="ai-model-path" value={$aiModelPath} placeholder="No model selected" disabled />
       <div class="row">
         <button on:click={pickModelPath}>Set Model Path</button>
         <button class="primary" on:click={toggleAi}>{$aiEnabled ? 'Unload AI' : 'Enable AI'}</button>
       </div>
-      <label>Device Mode</label>
+      <label for="ai-device-mode">Device Mode</label>
       <select
+        id="ai-device-mode"
         value={$aiDeviceMode}
         on:change={(event) =>
           applyDeviceMode((event.currentTarget as HTMLSelectElement).value as 'auto' | 'cpu' | 'npu')}
@@ -231,8 +232,9 @@
 
     <section>
       <h4>Speech</h4>
-      <label>Input Device</label>
+      <label for="stt-device">Input Device</label>
       <select
+        id="stt-device"
         value={$sttDevice}
         on:change={(event) =>
           applyAudioDevice((event.currentTarget as HTMLSelectElement).value)}
@@ -242,8 +244,8 @@
           <option value={device}>{device}</option>
         {/each}
       </select>
-      <label>STT Model</label>
-      <input value={$sttModelPath} placeholder="No model selected" disabled />
+      <label for="stt-model-path">STT Model</label>
+      <input id="stt-model-path" value={$sttModelPath} placeholder="No model selected" disabled />
       <button on:click={pickSttModel}>Set STT Model</button>
     </section>
 

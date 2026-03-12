@@ -4,7 +4,6 @@
   import {
     EditorView,
     Decoration,
-    DecorationSet,
     ViewPlugin,
     WidgetType,
     lineNumbers,
@@ -13,6 +12,7 @@
     drawSelection,
     keymap
   } from '@codemirror/view';
+  import type { DecorationSet } from '@codemirror/view';
   import { markdown } from '@codemirror/lang-markdown';
   import { languages } from '@codemirror/language-data';
   import { defaultKeymap } from '@codemirror/commands';
@@ -598,7 +598,10 @@
     bind:this={editorRoot}
     on:dragover|preventDefault
     on:drop|preventDefault={handleDrop}
-  />
+    role="textbox"
+    aria-multiline="true"
+    aria-label="Editor"
+  ></div>
   {#if commandOpen}
     <div class="command-palette" style={`top:${commandY}px; left:${commandX}px;`}>
       {#each filteredCommands() as command}

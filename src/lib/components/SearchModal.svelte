@@ -53,6 +53,20 @@
     closeSearch();
   };
 
+  const handleBackdropKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      closeSearch();
+    }
+  };
+
+  const handleModalKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeSearch();
+    }
+  };
+
   const mergeResults = (keyword: SearchResult[], semantic: SearchResult[]) => {
     const merged = new Map<string, SearchResult>();
     const add = (result: SearchResult) => {
@@ -69,8 +83,21 @@
 </script>
 
 {#if open}
-  <div class="backdrop" on:click={closeSearch}>
-    <div class="modal" on:click|stopPropagation>
+  <div
+    class="backdrop"
+    role="button"
+    tabindex="0"
+    on:click={closeSearch}
+    on:keydown={handleBackdropKeydown}
+  >
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      tabindex="0"
+      on:click|stopPropagation
+      on:keydown|stopPropagation={handleModalKeydown}
+    >
       <div class="tabs">
         <button class={`tab ${mode === 'keyword' ? 'active' : ''}`} on:click={() => changeMode('keyword')}>
           Keyword
