@@ -1,0 +1,40 @@
+{
+  "name": "quillpaw",
+  "version": "1.0.0",
+  "description": "Offline academic note taking desktop app",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-fs": "^2",
+    "@tauri-apps/plugin-store": "^2",
+    "@codemirror/lang-markdown": "^6",
+    "@codemirror/state": "^6",
+    "@codemirror/view": "^6",
+    "@codemirror/commands": "^6",
+    "@codemirror/language": "^6",
+    "@codemirror/language-data": "^6",
+    "@lezer/highlight": "^1",
+    "katex": "^0.16",
+    "pdfjs-dist": "^4",
+    "svelte": "^5",
+    "@sveltejs/vite-plugin-svelte": "^5",
+    "phosphor-svelte": "^3.0.1"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.6",
+    "@sveltejs/kit": "^2.9.0",
+    "@tauri-apps/cli": "^2",
+    "svelte-check": "^4.0.0",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vite": "^6"
+  }
+}
