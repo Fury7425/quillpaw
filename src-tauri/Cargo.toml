@@ -1,44 +1,12 @@
-[package]
-name = "quillpaw"
-version = "1.0.0"
-edition = "2021"
-
-[lib]
-name = "quillpaw_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-
-[build-dependencies]
-tauri-build = { version = "2", features = [] }
-
-[dependencies]
-tauri = "2"
-
-
-tauri-plugin-fs = "2"
-tauri-plugin-shell = "2"
-tauri-plugin-store = "2"
-tauri-plugin-notification = "2"
-serde = { version = "1", features = ["derive"] }
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -19,7 +19,7 @@
 serde_json = "1"
-tokio = { version = "1", features = ["full"] }
+ tokio = { version = "1", features = ["full" }
 tantivy = "0.22"
-usearch = { version = "2.24.0", default-features = false }
+-usearch = { version = "2.24.0", default-features = false }
++usearch = { version = "2.23.0", default-features = false }
 notify = "6"
 walkdir = "2"
 gray_matter = "0.2"
-chrono = { version = "0.4", features = ["serde"] }
-anyhow = "1"
-trash = "3"
-uuid = { version = "1", features = ["v4"] }
-llama-cpp-2 = "0.1"
-whisper-rs = "0.11"
-ort = { version = "2.0.0-rc.12", features = ["download-binaries"] }
-cpal = "0.15"
-rubato = "0.14"
-ndarray = "0.15"
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
-futures-util = "0.3"
-hound = "3"
 
-[target.'cfg(target_os = "windows")'.dependencies]
-wmi = "0.13"

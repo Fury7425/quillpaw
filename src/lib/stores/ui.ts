@@ -16,6 +16,7 @@ export type UiState = {
   searchMode: 'keyword' | 'semantic' | 'smart';
   drawingOpen: boolean;
   drawingFile: string | null;
+  theme: 'Dark Warm' | 'Dark Cool' | 'Light Parchment';
 };
 
 export const uiState = writable<UiState>({
@@ -27,7 +28,8 @@ export const uiState = writable<UiState>({
   lectureOpen: false,
   searchMode: 'keyword',
   drawingOpen: false,
-  drawingFile: null
+  drawingFile: null,
+  theme: 'Dark Warm'
 });
 
 export const toasts = writable<Toast[]>([]);

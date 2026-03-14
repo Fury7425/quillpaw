@@ -216,7 +216,7 @@
         class="resizer"
         role="separator"
         aria-orientation="vertical"
-        tabindex="0"
+        tabindex="-1"
         on:pointerdown={(event) => startResize('left', event)}
       ></div>
     </aside>
@@ -236,7 +236,7 @@
         class="resizer"
         role="separator"
         aria-orientation="vertical"
-        tabindex="0"
+        tabindex="-1"
         on:pointerdown={(event) => startResize('right', event)}
       ></div>
       <AIPanel />

@@ -116,7 +116,7 @@
   </div>
   <div class="tree">
     {#each $fileTree as node (node.path)}
-      <TreeNode {node} {expanded} {toggleFolder} on:context={onContextMenu} />
+      <TreeNode {node} {expanded} {toggleFolder} onContext={onContextMenu} />
     {/each}
   </div>
 </div>

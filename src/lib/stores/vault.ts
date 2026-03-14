@@ -1,6 +1,6 @@
 import { get, writable } from 'svelte/store';
 import { listen } from '@tauri-apps/api/event';
-import { Store } from '@tauri-apps/plugin-store';
+import { load } from '@tauri-apps/plugin-store';
 
 import type { FileNode } from '$lib/types';
 import { tauriInvoke } from '$lib/utils/tauri_bridge';
@@ -21,7 +21,7 @@ export async function openVault(): Promise<void> {
     await refreshTree();
     await tauriInvoke('build_search_index', { vaultPath: path });
     tauriInvoke('build_embeddings', { vaultPath: path }).catch(() => null);
-    const store = new Store(`${path}/.quillpaw/config.json`);
+    const store = await load(`${path}/.quillpaw/config.json`);
     await store.set('vaultPath', path);
     await store.save();
     await startWatcher();

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { Store } from '@tauri-apps/plugin-store';
+  import { load, type Store } from '@tauri-apps/plugin-store';
   import { open as openDialog } from '@tauri-apps/plugin-dialog';
   import { listen } from '@tauri-apps/api/event';
   import { get } from 'svelte/store';
 
-  import { toggleSettings, pushToast } from '$lib/stores/ui';
+  import { uiState, toggleSettings, pushToast } from '$lib/stores/ui';
   import { vaultPath } from '$lib/stores/vault';
   import {
     aiDeviceMode,
@@ -30,13 +30,22 @@
   const loadConfig = async () => {
     const vault = get(vaultPath);
     if (!vault) return;
-    configStore = new Store(`${vault}/.quillpaw/config.json`);
-    const storedAiPath = await configStore.get<string>('aiModelPath');
-    const storedDeviceMode = await configStore.get<string>('aiDeviceMode');
-    const storedSttPath = await configStore.get<string>('sttModelPath');
-    const storedDevice = await configStore.get<string>('sttDevice');
-    if (storedAiPath) aiModelPath.set(storedAiPath);
-    if (storedDeviceMode === 'cpu' || storedDeviceMode === 'npu' || storedDeviceMode === 'auto') {
+    const store = await load(`${vault}/.quillpaw/config.json`);
+    configStore = store;
+    const storedAiPath = await store.get<string>('aiModelPath');
+    const storedDeviceMode = await store.get<string>('aiDeviceMode');
+    const storedSttPath = await store.get<string>('sttModelPath');
+    const storedDevice = await store.get<string>('sttDevice');
+    const storedTheme = await store.get<string>('theme');
+
+    if (storedTheme === 'Dark Warm' || storedTheme === 'Dark Cool' || storedTheme === 'Light Parchment') {
+      uiState.update(state => ({ ...state, theme: storedTheme as 'Dark Warm' | 'Dark Cool' | 'Light Parchment' }));
+      document.documentElement.setAttribute('data-theme', storedTheme);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'Dark Warm');
+    }
+
+    if (storedAiPath) aiModelPath.set(storedAiPath);    if (storedDeviceMode === 'cpu' || storedDeviceMode === 'npu' || storedDeviceMode === 'auto') {
       aiDeviceMode.set(storedDeviceMode);
     }
     if (storedSttPath) {
@@ -100,8 +109,16 @@
     await configStore?.save();
   };
 
-  const toggleAi = async () => {
-    try {
+  const applyTheme = async (event: Event) => {
+    const target = event.target as HTMLSelectElement;
+    const theme = target.value as 'Dark Warm' | 'Dark Cool' | 'Light Parchment';
+    uiState.update(state => ({ ...state, theme }));
+    document.documentElement.setAttribute('data-theme', theme);
+    await configStore?.set('theme', theme);
+    await configStore?.save();
+  };
+
+  const toggleAi = async () => {    try {
       if (get(aiEnabled)) {
         const status = await tauriInvoke<AiModelStatus>('unload_ai_model');
         setModelStatus(status);
@@ -180,12 +197,11 @@
       <label for="vault-path">Vault Path</label>
       <input id="vault-path" value={$vaultPath || ''} placeholder="Select a vault" disabled />
       <label for="theme-select">Theme</label>
-      <select id="theme-select">
-        <option>Dark Warm</option>
-        <option>Dark Cool</option>
-        <option>Light Parchment</option>
-      </select>
-    </section>
+      <select id="theme-select" value={$uiState.theme} on:change={applyTheme}>
+        <option value="Dark Warm">Dark Warm</option>
+        <option value="Dark Cool">Dark Cool</option>
+        <option value="Light Parchment">Light Parchment</option>
+      </select>    </section>
 
     <section>
       <h4>Editor</h4>

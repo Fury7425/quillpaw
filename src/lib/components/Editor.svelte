@@ -564,7 +564,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const scaleX = canvas.width / (data.canvas?.width || 1920);
       const scaleY = canvas.height / (data.canvas?.height || 1080);
-      (data.strokes || []).forEach((stroke: { color: string; width: number; points: StrokePoint[] }) => {
+      (data.strokes || []).forEach((stroke: { color: string; width: number; points: [number, number, number][] }) => {
         ctx.strokeStyle = stroke.color || accentColor || baseColor;
         ctx.lineWidth = Math.max(1, stroke.width * 0.5);
         ctx.lineCap = 'round';
@@ -599,6 +599,7 @@
     on:dragover|preventDefault
     on:drop|preventDefault={handleDrop}
     role="textbox"
+    tabindex="0"
     aria-multiline="true"
     aria-label="Editor"
   ></div>

@@ -42,7 +42,7 @@
   {#if node.is_folder && expanded.has(node.path) && node.children}
     <div class="children">
       {#each node.children as child (child.path)}
-        <svelte:self node={child} {expanded} {toggleFolder} on:context={onContext} />
+        <svelte:self node={child} {expanded} {toggleFolder} {onContext} />
       {/each}
     </div>
   {/if}
