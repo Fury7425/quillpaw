@@ -49,7 +49,10 @@ pub async fn download_ai_model(
 #[tauri::command]
 pub async fn summarize_note(note_content: String, target_path: String) -> Result<AiProposal, String> {
     ensure_model_loaded().await?;
-    let summary = build_summary(&note_content);
+    let summary = ai_engine::prompt(
+        "You are a helpful assistant that summarizes notes. Provide a concise 2-3 sentence summary.",
+        &format!("Summarize this note:\n\n{note_content}")
+    ).await?;
     ai_engine::make_proposal(
         "summary",
         "Summary",
@@ -69,22 +72,17 @@ pub async fn ask_question(
 ) -> Result<AiProposal, String> {
     ensure_model_loaded().await?;
     let results = search::keyword_search(&vault_path, &question).await?;
-    let mut response = format!("Question: {question}\n\n");
-    if results.is_empty() {
-        response.push_str("No relevant notes were found.");
-    } else {
-        response.push_str("Sources:\n");
-        for result in results.iter().take(5) {
-            response.push_str(&format!("- {} ({})\n", result.title, result.path));
-        }
-        response.push_str("\nSuggested answer:\n");
-        if let Some(first) = results.first() {
-            response.push_str(&format!(
-                "Your notes highlight \"{}\" as the closest match.",
-                first.title
-            ));
-        }
+    let mut context_text = String::new();
+    for result in results.iter().take(3) {
+        let content = fs_manager::read_note_file(&result.path).await?;
+        context_text.push_str(&format!("\nNote: {}\nContent: {}\n", result.title, content.body));
     }
+
+    let response = ai_engine::prompt(
+        "You are a helpful assistant that answers questions based ONLY on the provided notes. If the answer is not in the notes, say you don't know.",
+        &format!("Context: {context_text}\n\nQuestion: {question}")
+    ).await?;
+
     let metadata = json!({
         "sources": results.iter().take(5).map(|r| json!({
             "path": r.path,

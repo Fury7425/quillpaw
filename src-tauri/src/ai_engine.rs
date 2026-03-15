@@ -36,16 +36,15 @@ impl AiDeviceMode {
     }
 }
 
+use llama_cpp_2::context::LlamaContext;
+use llama_cpp_2::token::data_array::LlamaTokenDataArray;
+use llama_cpp_2::token::LlamaToken;
+
 struct LoadedModel {
     model_path: String,
-    #[allow(dead_code)]
     backend: LlamaBackend,
-    #[allow(dead_code)]
     model: LlamaModel,
-    #[allow(dead_code)]
-    context_params: LlamaContextParams,
     device_mode: AiDeviceMode,
-    #[allow(dead_code)]
     loaded_at: String,
 }
 
@@ -57,6 +56,59 @@ struct AiState {
 
 fn state() -> &'static Mutex<AiState> {
     AI_STATE.get_or_init(|| Mutex::new(AiState::default()))
+}
+
+/// Run inference with the active model.
+pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
+    let guard = state().lock().await;
+    let loaded = guard.model.as_ref().ok_or("Model not loaded")?;
+    
+    let system = system.to_string();
+    let user = user.to_string();
+    let model_ptr = &loaded.model;
+
+    // We need to keep a reference to the backend for the context
+    let backend_ptr = &loaded.backend;
+
+    tokio::task::spawn_blocking(move || {
+        let mut context_params = LlamaContextParams::default();
+        context_params.set_n_ctx(Some(2048.try_into().unwrap()));
+        let mut context = LlamaContext::new(backend_ptr, model_ptr, &context_params)
+            .map_err(|e| e.to_string())?;
+
+        let prompt = format!("<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n");
+        let tokens = model_ptr.tokenize(&prompt, true, true).map_err(|e| e.to_string())?;
+        
+        let mut batch = llama_cpp_2::llama_batch::LlamaBatch::new(tokens.len(), 1);
+        for (i, &token) in tokens.iter().enumerate() {
+            batch.add(token, i as i32, &[0.try_into().unwrap()], i == tokens.len() - 1);
+        }
+
+        context.decode(&mut batch).map_err(|e| e.to_string())?;
+
+        let mut output = String::new();
+        let mut n_cur = tokens.len();
+        while n_cur < 512 {
+            let candidates = context.get_logits_ith(batch.n_tokens() - 1);
+            let candidates_p = LlamaTokenDataArray::from_iter(candidates.iter().enumerate().map(|(i, &l)| llama_cpp_2::token::data::LlamaTokenData::new(LlamaToken::new(i as i32), l, 0.0)), false);
+            
+            let token = context.sample_token_greedy(candidates_p);
+            if token == model_ptr.token_eos() {
+                break;
+            }
+            
+            output.push_str(&model_ptr.token_to_str(token).map_err(|e| e.to_string())?);
+            
+            batch.clear();
+            batch.add(token, n_cur as i32, &[0.try_into().unwrap()], true);
+            context.decode(&mut batch).map_err(|e| e.to_string())?;
+            n_cur += 1;
+        }
+
+        Ok(output)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 /// Load a GGUF model into the AI runtime.
@@ -71,15 +123,16 @@ pub async fn load_model(model_path: &str, device_mode: AiDeviceMode) -> Result<A
     let model_path = model_path.to_string();
     let loaded = tokio::task::spawn_blocking(move || -> Result<LoadedModel, String> {
         let backend = LlamaBackend::init().map_err(|e| e.to_string())?;
-        let model_params = LlamaModelParams::default();
+        let mut model_params = LlamaModelParams::default();
+        if matches!(device_mode, AiDeviceMode::Npu) {
+            // Placeholder for NPU specific params if needed
+        }
         let model = LlamaModel::load_from_file(&backend, &model_path, &model_params)
             .map_err(|e| e.to_string())?;
-        let context_params = LlamaContextParams::default();
         Ok(LoadedModel {
             model_path,
             backend,
             model,
-            context_params,
             device_mode,
             loaded_at: Utc::now().to_rfc3339(),
         })
