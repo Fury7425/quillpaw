@@ -86,19 +86,18 @@ impl ModelManager {
         let token_type_ids_array = Array2::from_shape_vec((batch_size, seq_len), token_type_ids).map_err(|e| e.to_string())?;
 
         let outputs = session.run(inputs![
-            "input_ids" => input_ids_array,
-            "attention_mask" => attention_mask_array,
-            "token_type_ids" => token_type_ids_array,
-        ].map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+            "input_ids" => input_ids_array.view(),
+            "attention_mask" => attention_mask_array.view(),
+            "token_type_ids" => token_type_ids_array.view(),
+        ].unwrap()).map_err(|e| e.to_string())?;
 
-        let last_hidden_state = outputs["last_hidden_state"].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
+        let (_shape, data) = outputs["last_hidden_state"].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
         
         // Mean pooling
         let mut mean_embedding = vec![0.0; EMBEDDING_DIM];
-        let view = last_hidden_state.view();
         for i in 0..seq_len {
             for j in 0..EMBEDDING_DIM {
-                mean_embedding[j] += view[[0, i, j]];
+                mean_embedding[j] += data[i * EMBEDDING_DIM + j];
             }
         }
         for j in 0..EMBEDDING_DIM {
@@ -268,10 +267,19 @@ async fn brute_force_search(manifest: &EmbeddingManifest, base_dir: &Path, query
 }
 
 async fn search_hnsw(base_dir: &Path, manifest: &EmbeddingManifest, query_embedding: &[f32]) -> Result<Vec<SearchResult>, String> {
-    use usearch::Index;
+    use usearch::{Index, ffi::{IndexOptions, MetricKind, ScalarKind}};
     let hnsw_path = base_dir.join(HNSW_FILE);
+    
     let mut index = if tokio::fs::metadata(&hnsw_path).await.is_ok() {
-        Index::open(&hnsw_path).map_err(|e| e.to_string())?
+        let options = IndexOptions {
+            dimensions: EMBEDDING_DIM,
+            metric: MetricKind::Cos,
+            quantization: ScalarKind::F32,
+            ..Default::default()
+        };
+        let index = Index::new(&options).map_err(|e| e.to_string())?;
+        index.load(hnsw_path.to_str().unwrap()).map_err(|e| e.to_string())?;
+        index
     } else {
         build_index_async(&hnsw_path, manifest, base_dir).await?
     };
@@ -293,20 +301,20 @@ async fn search_hnsw(base_dir: &Path, manifest: &EmbeddingManifest, query_embedd
 }
 
 async fn build_index_async(hnsw_path: &Path, manifest: &EmbeddingManifest, base_dir: &Path) -> Result<usearch::Index, String> {
-    use usearch::{Index, IndexOptions, MetricKind, ScalarKind};
+    use usearch::{Index, ffi::{IndexOptions, MetricKind, ScalarKind}};
     let options = IndexOptions {
         dimensions: EMBEDDING_DIM,
         metric: MetricKind::Cos,
         quantization: ScalarKind::F32,
         ..Default::default()
     };
-    let mut index = Index::new(options).map_err(|e| e.to_string())?;
+    let index = Index::new(&options).map_err(|e| e.to_string())?;
     for entry in &manifest.entries {
         let embedding_path = base_dir.join(&entry.embedding_file);
         let vector = read_embedding(&embedding_path).await?;
         index.add(entry.id, &vector).map_err(|e| e.to_string())?;
     }
-    index.save(hnsw_path).map_err(|e| e.to_string())?;
+    index.save(hnsw_path.to_str().unwrap()).map_err(|e| e.to_string())?;
     Ok(index)
 }
 
@@ -330,7 +338,7 @@ fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
 
 fn embeddings_dir(vault_path: &str) -> PathBuf { Path::new(vault_path).join(".quillpaw/embeddings") }
 fn embedding_filename(path: &str) -> String { format!("{:x}.json", hash_id(path)) }
-fn hash_id<T: Hash>(value: &T) -> u64 {
+fn hash_id<T: Hash + ?Sized>(value: &T) -> u64 {
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     value.hash(&mut hasher);
     hasher.finish()

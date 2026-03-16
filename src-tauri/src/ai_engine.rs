@@ -4,12 +4,13 @@ use std::sync::OnceLock;
 
 use chrono::Utc;
 use futures_util::StreamExt;
-use llama_cpp_2::context::LlamaContextParams;
+use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::llama_backend::LlamaBackend;
-use llama_cpp_2::model::{LlamaModel, LlamaModelParams};
+use llama_cpp_2::model::LlamaModel;
+use llama_cpp_2::model::params::LlamaModelParams;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, Emitter};
 use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -39,6 +40,7 @@ impl AiDeviceMode {
 use llama_cpp_2::context::LlamaContext;
 use llama_cpp_2::token::data_array::LlamaTokenDataArray;
 use llama_cpp_2::token::LlamaToken;
+use llama_cpp_2::model::Special;
 
 struct LoadedModel {
     model_path: String,
@@ -72,12 +74,12 @@ pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
 
     tokio::task::spawn_blocking(move || {
         let mut context_params = LlamaContextParams::default();
-        context_params.set_n_ctx(Some(2048.try_into().unwrap()));
-        let mut context = LlamaContext::new(backend_ptr, model_ptr, &context_params)
-            .map_err(|e| e.to_string())?;
+        context_params = context_params.with_n_ctx(Some(2048.try_into().unwrap()));
+        let mut context = model_ptr.new_context(backend_ptr, context_params)
+            .map_err(|e: llama_cpp_2::context::LlamaContextError| e.to_string())?;
 
         let prompt = format!("<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n");
-        let tokens = model_ptr.tokenize(&prompt, true, true).map_err(|e| e.to_string())?;
+        let tokens = model_ptr.str_to_token(&prompt, llama_cpp_2::model::AddBos::Always).map_err(|e| e.to_string())?;
         
         let mut batch = llama_cpp_2::llama_batch::LlamaBatch::new(tokens.len(), 1);
         for (i, &token) in tokens.iter().enumerate() {
@@ -97,7 +99,11 @@ pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
                 break;
             }
             
-            output.push_str(&model_ptr.token_to_str(token).map_err(|e| e.to_string())?);
+            let token_str = model_ptr.token_to_piece(token, Special::Tokenize)
+                .into_iter()
+                .map(|b| b as char)
+                .collect::<String>();
+            output.push_str(&token_str);
             
             batch.clear();
             batch.add(token, n_cur as i32, &[0.try_into().unwrap()], true);
@@ -313,10 +319,11 @@ fn resolve_model_spec(model_id: &str, custom_url: Option<String>) -> Result<Mode
         let filename = Path::new(&url)
             .file_name()
             .and_then(|s| s.to_str())
-            .unwrap_or(model_id);
+            .unwrap_or(model_id)
+            .to_string(); // clone to own
         return Ok(ModelSpec {
             id: model_id,
-            filename,
+            filename: Box::leak(filename.into_boxed_str()), // Or manage lifetime differently
             url,
         });
     }
@@ -333,7 +340,7 @@ fn resolve_model_spec(model_id: &str, custom_url: Option<String>) -> Result<Mode
 }
 
 fn emit_download_progress(app: &AppHandle, progress: ModelDownloadProgress) -> Result<(), String> {
-    app.emit_all("model-download-progress", progress)
+    app.emit("model-download-progress", progress)
         .map_err(|e| e.to_string())
 }
 
