@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { X } from 'phosphor-svelte';
-  import { openTabs, activePath, openNote, closeTab } from '$lib/stores/editor';
+  import { X } from "phosphor-svelte";
+  import { openTabs, activePath, openNote, closeTab } from "$lib/stores/editor";
 </script>
 
 <div class="tabbar">
   {#each $openTabs as tab (tab.path)}
     <div
-      class={`tab ${$activePath === tab.path ? 'active' : ''}`}
+      class={`tab ${$activePath === tab.path ? "active" : ""}`}
       role="button"
       tabindex="0"
       aria-pressed={$activePath === tab.path}
       on:click={() => openNote(tab.path)}
       on:keydown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           openNote(tab.path);
         }

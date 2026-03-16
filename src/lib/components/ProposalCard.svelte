@@ -1,30 +1,37 @@
 <script lang="ts">
-  import { get } from 'svelte/store';
-  import type { AiProposal } from '$lib/types';
-  import { tauriInvoke } from '$lib/utils/tauri_bridge';
-  import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
-  import { removeProposal, updateProposal } from '$lib/stores/ai';
-  import { activePath, openNote } from '$lib/stores/editor';
-  import { pushToast } from '$lib/stores/ui';
+  import { get } from "svelte/store";
+  import type { AiProposal } from "$lib/types";
+  import { tauriInvoke } from "$lib/utils/tauri_bridge";
+  import {
+    isPermissionGranted,
+    requestPermission,
+    sendNotification,
+  } from "@tauri-apps/plugin-notification";
+  import { removeProposal, updateProposal } from "$lib/stores/ai";
+  import { activePath, openNote } from "$lib/stores/editor";
+  import { pushToast } from "$lib/stores/ui";
 
   export let proposal: AiProposal;
 
   const apply = async () => {
     if (!proposal.target_path) {
-      pushToast('This proposal has no target note.');
+      pushToast("This proposal has no target note.");
       return;
     }
     try {
-      await tauriInvoke('apply_ai_proposal', {
+      await tauriInvoke("apply_ai_proposal", {
         proposalId: proposal.id,
-        targetPath: proposal.target_path
+        targetPath: proposal.target_path,
       });
-      if (proposal.proposal_type === 'reminder') {
+      if (proposal.proposal_type === "reminder") {
         const granted = await isPermissionGranted();
         if (!granted) {
           await requestPermission();
         }
-        sendNotification({ title: 'Quillpaw Reminder', body: proposal.content });
+        sendNotification({
+          title: "Quillpaw Reminder",
+          body: proposal.content,
+        });
       }
       removeProposal(proposal.id);
       if (get(activePath) === proposal.target_path) {
@@ -36,7 +43,7 @@
   };
 
   const edit = () => {
-    const updated = window.prompt('Edit proposal text', proposal.content);
+    const updated = window.prompt("Edit proposal text", proposal.content);
     if (updated !== null) {
       updateProposal(proposal.id, updated);
     }
@@ -54,7 +61,9 @@
   </div>
   <p>{proposal.content}</p>
   <div class="actions">
-    <button class="primary" on:click={apply} disabled={!proposal.target_path}>Accept</button>
+    <button class="primary" on:click={apply} disabled={!proposal.target_path}
+      >Accept</button
+    >
     <button on:click={edit}>Edit</button>
     <button class="ghost" on:click={dismiss}>Dismiss</button>
   </div>

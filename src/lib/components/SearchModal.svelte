@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { openNote } from '$lib/stores/editor';
-  import { closeSearch, openSearch, pushToast } from '$lib/stores/ui';
-  import { vaultPath } from '$lib/stores/vault';
-  import { tauriInvoke } from '$lib/utils/tauri_bridge';
-  import type { SearchResult } from '$lib/types';
+  import { openNote } from "$lib/stores/editor";
+  import { closeSearch, openSearch, pushToast } from "$lib/stores/ui";
+  import { vaultPath } from "$lib/stores/vault";
+  import { tauriInvoke } from "$lib/utils/tauri_bridge";
+  import type { SearchResult } from "$lib/types";
 
   export let open = false;
-  export let mode: 'keyword' | 'semantic' | 'smart' = 'keyword';
+  export let mode: "keyword" | "semantic" | "smart" = "keyword";
 
-  let query = '';
+  let query = "";
   let results: SearchResult[] = [];
   let timer: ReturnType<typeof setTimeout> | null = null;
   let loading = false;
@@ -22,14 +22,26 @@
     if (!vault) return;
     loading = true;
     try {
-      if (mode === 'semantic') {
-        results = await tauriInvoke<SearchResult[]>('search_semantic', { vaultPath: vault, query });
-      } else if (mode === 'smart') {
-        const keyword = await tauriInvoke<SearchResult[]>('search_notes', { vaultPath: vault, query });
-        const semantic = await tauriInvoke<SearchResult[]>('search_semantic', { vaultPath: vault, query });
+      if (mode === "semantic") {
+        results = await tauriInvoke<SearchResult[]>("search_semantic", {
+          vaultPath: vault,
+          query,
+        });
+      } else if (mode === "smart") {
+        const keyword = await tauriInvoke<SearchResult[]>("search_notes", {
+          vaultPath: vault,
+          query,
+        });
+        const semantic = await tauriInvoke<SearchResult[]>("search_semantic", {
+          vaultPath: vault,
+          query,
+        });
         results = mergeResults(keyword, semantic);
       } else {
-        results = await tauriInvoke<SearchResult[]>('search_notes', { vaultPath: vault, query });
+        results = await tauriInvoke<SearchResult[]>("search_notes", {
+          vaultPath: vault,
+          query,
+        });
       }
     } catch (err) {
       pushToast(err instanceof Error ? err.message : String(err));
@@ -43,7 +55,7 @@
     timer = setTimeout(runSearch, 150);
   };
 
-  const changeMode = (next: 'keyword' | 'semantic' | 'smart') => {
+  const changeMode = (next: "keyword" | "semantic" | "smart") => {
     openSearch(next);
     setTimeout(runSearch, 0);
   };
@@ -54,14 +66,14 @@
   };
 
   const handleBackdropKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+    if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       closeSearch();
     }
   };
 
   const handleModalKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
       event.preventDefault();
       closeSearch();
     }
@@ -99,13 +111,22 @@
       on:keydown|stopPropagation={handleModalKeydown}
     >
       <div class="tabs">
-        <button class={`tab ${mode === 'keyword' ? 'active' : ''}`} on:click={() => changeMode('keyword')}>
+        <button
+          class={`tab ${mode === "keyword" ? "active" : ""}`}
+          on:click={() => changeMode("keyword")}
+        >
           Keyword
         </button>
-        <button class={`tab ${mode === 'semantic' ? 'active' : ''}`} on:click={() => changeMode('semantic')}>
+        <button
+          class={`tab ${mode === "semantic" ? "active" : ""}`}
+          on:click={() => changeMode("semantic")}
+        >
           Semantic
         </button>
-        <button class={`tab ${mode === 'smart' ? 'active' : ''}`} on:click={() => changeMode('smart')}>
+        <button
+          class={`tab ${mode === "smart" ? "active" : ""}`}
+          on:click={() => changeMode("smart")}
+        >
           Smart
         </button>
       </div>
@@ -118,7 +139,9 @@
             <button on:click={() => openResult(result)}>
               <div class="title">{result.title}</div>
               <div class="snippet">{@html result.snippet}</div>
-              <div class="meta">{result.result_type} - {result.score.toFixed(2)}</div>
+              <div class="meta">
+                {result.result_type} - {result.score.toFixed(2)}
+              </div>
             </button>
           {/each}
           {#if results.length === 0}

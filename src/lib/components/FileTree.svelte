@@ -1,6 +1,6 @@
 <script lang="ts">
-  import TreeNode from '$lib/components/TreeNode.svelte';
-  import type { FileNode } from '$lib/types';
+  import TreeNode from "$lib/components/TreeNode.svelte";
+  import type { FileNode } from "$lib/types";
   import {
     fileTree,
     vaultPath,
@@ -11,9 +11,9 @@
     setFocused,
     focusedPath,
     focusedIsFolder,
-    toVaultRelative
-  } from '$lib/stores/vault';
-  import { openNote } from '$lib/stores/editor';
+    toVaultRelative,
+  } from "$lib/stores/vault";
+  import { openNote } from "$lib/stores/editor";
 
   let expanded = new Set<string>();
   let contextOpen = false;
@@ -46,7 +46,7 @@
   };
 
   const handlePanelKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+    if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       closeContext();
     }
@@ -55,11 +55,11 @@
   const parentFolder = (path: string) => {
     const parts = path.split(/[/\\]/);
     parts.pop();
-    return parts.join('/');
+    return parts.join("/");
   };
 
   const handleCreateNote = async () => {
-    const title = window.prompt('Note title');
+    const title = window.prompt("Note title");
     if (!title) return closeContext();
     const vault = $vaultPath;
     if (!vault) return closeContext();
@@ -72,7 +72,7 @@
   };
 
   const handleCreateFolder = async () => {
-    const name = window.prompt('Folder name');
+    const name = window.prompt("Folder name");
     if (!name) return closeContext();
     const vault = $vaultPath;
     if (!vault) return closeContext();
@@ -86,7 +86,7 @@
 
   const handleRename = async () => {
     if (!contextNode) return closeContext();
-    const name = window.prompt('New name', contextNode.name);
+    const name = window.prompt("New name", contextNode.name);
     if (!name) return closeContext();
     await renameItem(contextNode.path, name);
     closeContext();
@@ -111,7 +111,9 @@
   <div class="header">
     <h3>Vault</h3>
     {#if $focusedPath}
-      <span class="focus">{($focusedIsFolder ? 'Folder' : 'File') + ' selected'}</span>
+      <span class="focus"
+        >{($focusedIsFolder ? "Folder" : "File") + " selected"}</span
+      >
     {/if}
   </div>
   <div class="tree">

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { FolderSimple, FileText } from 'phosphor-svelte';
-  import type { FileNode } from '$lib/types';
-  import { setFocused, focusedPath } from '$lib/stores/vault';
-  import { openNote } from '$lib/stores/editor';
+  import { FolderSimple, FileText } from "phosphor-svelte";
+  import type { FileNode } from "$lib/types";
+  import { setFocused, focusedPath } from "$lib/stores/vault";
+  import { openNote } from "$lib/stores/editor";
 
   export let node: FileNode;
   export let expanded: Set<string>;
@@ -16,7 +16,7 @@
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
+    if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       activate();
     }
@@ -25,7 +25,7 @@
 
 <div class="node">
   <div
-    class={`row ${node.path === $focusedPath ? 'active' : ''}`}
+    class={`row ${node.path === $focusedPath ? "active" : ""}`}
     role="button"
     tabindex="0"
     on:click={activate}
