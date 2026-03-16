@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::time::UNIX_EPOCH;
 
-use ndarray::{Array2, Axis};
+use ndarray::Array2;
 use ort::{
     inputs,
     session::{builder::GraphOptimizationLevel, Session},
@@ -54,7 +54,7 @@ impl ModelManager {
             download_file(TOKENIZER_URL, &tokenizer_path).await?;
         }
 
-        let tokenizer = Tokenizer::from_file(&tokenizer_path).map_err(|e| e.to_string())?;
+        let tokenizer = Tokenizer::from_file(tokenizer_path.to_str().unwrap_or_default()).map_err(|e| e.to_string())?;
         let session = Session::builder()
             .map_err(|e| e.to_string())?
             .with_optimization_level(GraphOptimizationLevel::Level3)
@@ -91,13 +91,13 @@ impl ModelManager {
             "token_type_ids" => token_type_ids_array.view(),
         ].unwrap()).map_err(|e| e.to_string())?;
 
-        let (_shape, data) = outputs["last_hidden_state"].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
+        let tensor = outputs["last_hidden_state"].try_extract_tensor::<f32>().map_err(|e| e.to_string())?;
         
         // Mean pooling
         let mut mean_embedding = vec![0.0; EMBEDDING_DIM];
         for i in 0..seq_len {
             for j in 0..EMBEDDING_DIM {
-                mean_embedding[j] += data[i * EMBEDDING_DIM + j];
+                mean_embedding[j] += tensor[[0, i, j]];
             }
         }
         for j in 0..EMBEDDING_DIM {
@@ -285,8 +285,8 @@ async fn search_hnsw(base_dir: &Path, manifest: &EmbeddingManifest, query_embedd
     };
     let matches = index.search(query_embedding, 10).map_err(|e| e.to_string())?;
     let mut results = Vec::new();
-    for (id, distance) in matches {
-        if let Some(entry) = manifest.entries.iter().find(|entry| entry.id == id) {
+    for (id, distance) in matches.keys.iter().zip(matches.distances.iter()) {
+        if let Some(entry) = manifest.entries.iter().find(|entry| entry.id == *id) {
             let score = 1.0 - distance;
             results.push(SearchResult {
                 path: entry.path.clone(),

@@ -10,7 +10,7 @@ use llama_cpp_2::model::LlamaModel;
 use llama_cpp_2::model::params::LlamaModelParams;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, Emitter};
+use tauri::{AppHandle, Emitter};
 use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -37,16 +37,15 @@ impl AiDeviceMode {
     }
 }
 
-use llama_cpp_2::context::LlamaContext;
 use llama_cpp_2::token::data_array::LlamaTokenDataArray;
 use llama_cpp_2::token::LlamaToken;
-use llama_cpp_2::model::Special;
 
 struct LoadedModel {
     model_path: String,
     backend: LlamaBackend,
     model: LlamaModel,
     device_mode: AiDeviceMode,
+    #[allow(dead_code)]
     loaded_at: String,
 }
 
@@ -62,28 +61,28 @@ fn state() -> &'static Mutex<AiState> {
 
 /// Run inference with the active model.
 pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
-    let guard = state().lock().await;
-    let loaded = guard.model.as_ref().ok_or("Model not loaded")?;
-    
-    let system = system.to_string();
-    let user = user.to_string();
-    let model_ptr = &loaded.model;
+    let system_owned = system.to_string();
+    let user_owned = user.to_string();
 
-    // We need to keep a reference to the backend for the context
-    let backend_ptr = &loaded.backend;
-
+    // We need to do all llama work inside spawn_blocking since the types are !Send.
+    // Re-acquire the lock inside the blocking context.
     tokio::task::spawn_blocking(move || {
-        let mut context_params = LlamaContextParams::default();
-        context_params = context_params.with_n_ctx(Some(2048.try_into().unwrap()));
-        let mut context = model_ptr.new_context(backend_ptr, context_params)
-            .map_err(|e: llama_cpp_2::context::LlamaContextError| e.to_string())?;
+        let rt = tokio::runtime::Handle::current();
+        let guard = rt.block_on(state().lock());
+        let loaded = guard.model.as_ref().ok_or("Model not loaded")?;
 
-        let prompt = format!("<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n");
-        let tokens = model_ptr.str_to_token(&prompt, llama_cpp_2::model::AddBos::Always).map_err(|e| e.to_string())?;
-        
-        let mut batch = llama_cpp_2::llama_batch::LlamaBatch::new(tokens.len(), 1);
+        let ctx_params = LlamaContextParams::default()
+            .with_n_ctx(Some(std::num::NonZeroU32::new(2048).unwrap()));
+        let mut context = loaded.model.new_context(&loaded.backend, ctx_params)
+            .map_err(|e| e.to_string())?;
+
+        let prompt_text = format!("<|system|>\n{}\n<|user|>\n{}\n<|assistant|>\n", system_owned, user_owned);
+        let tokens = loaded.model.str_to_token(&prompt_text, llama_cpp_2::model::AddBos::Always).map_err(|e| e.to_string())?;
+
+        let mut batch = llama_cpp_2::llama_batch::LlamaBatch::new(tokens.len() + 512, 1);
         for (i, &token) in tokens.iter().enumerate() {
-            batch.add(token, i as i32, &[0.try_into().unwrap()], i == tokens.len() - 1);
+            let last = i == tokens.len() - 1;
+            batch.add(token, i as i32, &[0i32], last).map_err(|e| e.to_string())?;
         }
 
         context.decode(&mut batch).map_err(|e| e.to_string())?;
@@ -91,22 +90,26 @@ pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
         let mut output = String::new();
         let mut n_cur = tokens.len();
         while n_cur < 512 {
-            let candidates = context.get_logits_ith(batch.n_tokens() - 1);
-            let candidates_p = LlamaTokenDataArray::from_iter(candidates.iter().enumerate().map(|(i, &l)| llama_cpp_2::token::data::LlamaTokenData::new(LlamaToken::new(i as i32), l, 0.0)), false);
-            
-            let token = context.sample_token_greedy(candidates_p);
-            if token == model_ptr.token_eos() {
+            let logits = context.get_logits_ith(batch.n_tokens() - 1);
+            let mut candidates = LlamaTokenDataArray::from_iter(
+                logits.iter().enumerate().map(|(i, &logit)| {
+                    llama_cpp_2::token::data::LlamaTokenData::new(LlamaToken(i as i32), logit, 0.0)
+                }),
+                false,
+            );
+
+            let token = candidates.sample_token_greedy();
+            if token == loaded.model.token_eos() {
                 break;
             }
-            
-            let token_str = model_ptr.token_to_piece(token, Special::Tokenize)
-                .into_iter()
-                .map(|b| b as char)
-                .collect::<String>();
-            output.push_str(&token_str);
-            
+
+            let piece_bytes = loaded.model.token_to_bytes(token, llama_cpp_2::model::Special::Tokenize).map_err(|e| e.to_string())?;
+            if let Ok(piece_str) = String::from_utf8(piece_bytes) {
+                output.push_str(&piece_str);
+            }
+
             batch.clear();
-            batch.add(token, n_cur as i32, &[0.try_into().unwrap()], true);
+            batch.add(token, n_cur as i32, &[0i32], true).map_err(|e| e.to_string())?;
             context.decode(&mut batch).map_err(|e| e.to_string())?;
             n_cur += 1;
         }
@@ -129,7 +132,7 @@ pub async fn load_model(model_path: &str, device_mode: AiDeviceMode) -> Result<A
     let model_path = model_path.to_string();
     let loaded = tokio::task::spawn_blocking(move || -> Result<LoadedModel, String> {
         let backend = LlamaBackend::init().map_err(|e| e.to_string())?;
-        let mut model_params = LlamaModelParams::default();
+        let model_params = LlamaModelParams::default();
         if matches!(device_mode, AiDeviceMode::Npu) {
             // Placeholder for NPU specific params if needed
         }
@@ -287,8 +290,8 @@ fn build_status(state: &AiState, detail: &str) -> AiModelStatus {
 
 #[derive(Clone)]
 struct ModelSpec {
-    id: &'static str,
-    filename: &'static str,
+    id: String,
+    filename: String,
     url: String,
 }
 
@@ -320,18 +323,18 @@ fn resolve_model_spec(model_id: &str, custom_url: Option<String>) -> Result<Mode
             .file_name()
             .and_then(|s| s.to_str())
             .unwrap_or(model_id)
-            .to_string(); // clone to own
+            .to_string();
         return Ok(ModelSpec {
-            id: model_id,
-            filename: Box::leak(filename.into_boxed_str()), // Or manage lifetime differently
+            id: model_id.to_string(),
+            filename,
             url,
         });
     }
     for (id, filename, url) in specs {
         if id == model_id {
             return Ok(ModelSpec {
-                id,
-                filename,
+                id: id.to_string(),
+                filename: filename.to_string(),
                 url: url.to_string(),
             });
         }

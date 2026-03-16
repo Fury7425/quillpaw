@@ -43,3 +43,4 @@ reqwest = { version = "0.11", features = ["json", "stream"] }
 futures-util = "0.3"
 tokenizers = "0.15"
 tiny-skia = "0.11"
+hound = "3"

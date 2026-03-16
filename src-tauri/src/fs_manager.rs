@@ -245,31 +245,33 @@ pub async fn save_atomic(path: &str, content: &str) -> Result<(), String> {
     Ok(())
 }
 
-async fn build_tree_inner(path: &Path) -> Result<Vec<FileNode>, String> {
-    let mut nodes = vec![];
-    let mut dir = fs::read_dir(path).await.map_err(|e| e.to_string())?;
-    while let Some(entry) = dir.next_entry().await.map_err(|e| e.to_string())? {
-        let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with('.') || name == ".quillpaw" || name == ".assets" {
-            continue;
+fn build_tree_inner(path: &Path) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<FileNode>, String>> + Send + '_>> {
+    Box::pin(async move {
+        let mut nodes = vec![];
+        let mut dir = fs::read_dir(path).await.map_err(|e| e.to_string())?;
+        while let Some(entry) = dir.next_entry().await.map_err(|e| e.to_string())? {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.starts_with('.') || name == ".quillpaw" || name == ".assets" {
+                continue;
+            }
+            let file_type = entry.file_type().await.map_err(|e| e.to_string())?;
+            let path = entry.path();
+            let is_folder = file_type.is_dir();
+            let children = if is_folder {
+                Some(build_tree_inner(&path).await?)
+            } else {
+                None
+            };
+            nodes.push(FileNode {
+                name,
+                path: path.to_string_lossy().to_string(),
+                is_folder,
+                children,
+            });
         }
-        let file_type = entry.file_type().await.map_err(|e| e.to_string())?;
-        let path = entry.path();
-        let is_folder = file_type.is_dir();
-        let children = if is_folder {
-            Some(build_tree_inner(&path).await?)
-        } else {
-            None
-        };
-        nodes.push(FileNode {
-            name,
-            path: path.to_string_lossy().to_string(),
-            is_folder,
-            children,
-        });
-    }
-    nodes.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
-    Ok(nodes)
+        nodes.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        Ok(nodes)
+    })
 }
 
 fn parse_frontmatter(content: &str) -> (Frontmatter, String) {

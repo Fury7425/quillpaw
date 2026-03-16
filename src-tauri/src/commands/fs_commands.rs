@@ -1,4 +1,5 @@
 use tauri::AppHandle;
+use tauri_plugin_dialog::DialogExt;
 
 
 use crate::fs_manager;
@@ -8,11 +9,11 @@ use crate::watcher;
 /// Prompt the user to open a vault folder and initialize required structure.
 #[tauri::command]
 pub async fn open_vault(app: AppHandle) -> Result<String, String> {
-    let folder = app.dialog().directory().pick_folder().await.map_err(|e| e.to_string())?;
+    let folder = app.dialog().file().blocking_pick_folder();
     let Some(path) = folder else {
         return Err("No vault folder selected".to_string());
     };
-    let path_string = path.to_string_lossy().to_string();
+    let path_string = path.to_string();
     fs_manager::ensure_vault_structure(&path_string).await?;
     watcher::start_watcher(app, path_string.clone()).await?;
     Ok(path_string)

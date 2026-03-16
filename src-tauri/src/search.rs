@@ -71,15 +71,15 @@ pub async fn keyword_search(vault_path: &str, query: &str) -> Result<Vec<SearchR
             .map_err(|e| e.to_string())?;
         let mut results = vec![];
         for (score, doc_address) in top_docs {
-            let retrieved = searcher.doc(doc_address).map_err(|e| e.to_string())?;
+            let retrieved: tantivy::TantivyDocument = searcher.doc(doc_address).map_err(|e| e.to_string())?;
             let path = retrieved
                 .get_first(fields.path)
-                .and_then(|v| v.as_str())
+                .and_then(|v: &tantivy::schema::OwnedValue| v.as_str())
                 .unwrap_or("")
                 .to_string();
             let title = retrieved
                 .get_first(fields.title)
-                .and_then(|v| v.as_str())
+                .and_then(|v: &tantivy::schema::OwnedValue| v.as_str())
                 .unwrap_or("Untitled")
                 .to_string();
             let snippet = snippet_gen.snippet_from_doc(&retrieved).to_html();

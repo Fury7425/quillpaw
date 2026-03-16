@@ -1,7 +1,7 @@
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::path::Path;
 use std::sync::{Mutex, OnceLock};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 static WATCHER: OnceLock<Mutex<Option<RecommendedWatcher>>> = OnceLock::new();
 

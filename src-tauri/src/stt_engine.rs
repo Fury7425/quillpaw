@@ -5,14 +5,23 @@ use std::time::Duration;
 
 use chrono::Utc;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{SampleFormat, Stream};
+use cpal::SampleFormat;
 use hound::{SampleFormat as WavSampleFormat, WavSpec, WavWriter};
 use serde::Serialize;
-use tauri::Manager;
+use tauri::Emitter;
 use tokio::sync::{mpsc, oneshot, Mutex};
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext};
 
 use crate::fs_manager;
+
+// Wrapper to make cpal::Stream usable in a static context.
+// cpal::Stream is !Send because of platform internals, but we only
+// ever access it behind a Mutex on the same thread that created it
+// (or to drop it). Using an unsafe Send/Sync wrapper is the accepted
+// pattern for cpal stream handles stored in global state.
+struct SendStream(cpal::Stream);
+unsafe impl Send for SendStream {}
+unsafe impl Sync for SendStream {}
 
 static STT_STATE: OnceLock<Mutex<SttState>> = OnceLock::new();
 
@@ -21,7 +30,7 @@ struct SttState {
     active: bool,
     device_name: Option<String>,
     model_path: Option<String>,
-    stream: Option<Stream>,
+    stream: Option<SendStream>,
     stop_tx: Option<oneshot::Sender<()>>,
 }
 
@@ -55,7 +64,7 @@ pub async fn start(app: tauri::AppHandle, vault_path: String) -> Result<(), Stri
     let (tx, rx) = mpsc::channel::<Vec<f32>>(64);
     let (stop_tx, stop_rx) = oneshot::channel();
     let stream = build_stream(device, config.sample_format(), channels, tx)?;
-    stream.play().map_err(|e| e.to_string())?;
+    stream.0.play().map_err(|e| e.to_string())?;
 
     tokio::spawn(run_pipeline(
         app,
@@ -146,45 +155,55 @@ fn build_stream(
     sample_format: SampleFormat,
     channels: usize,
     tx: mpsc::Sender<Vec<f32>>,
-) -> Result<Stream, String> {
+) -> Result<SendStream, String> {
     let config = device
         .default_input_config()
         .map_err(|e| e.to_string())?
         .config();
-    let err_fn = |err| eprintln!("audio stream error: {err}");
-    match sample_format {
-        SampleFormat::F32 => device.build_input_stream(
-            &config,
-            move |data: &[f32], _| {
-                let _ = tx.try_send(interleave_to_mono(data, channels));
-            },
-            err_fn,
-            None,
-        ),
-        SampleFormat::I16 => device.build_input_stream(
-            &config,
-            move |data: &[i16], _| {
-                let as_f32 = data.iter().map(|s| *s as f32 / i16::MAX as f32).collect();
-                let _ = tx.try_send(interleave_to_mono(&as_f32, channels));
-            },
-            err_fn,
-            None,
-        ),
-        SampleFormat::U16 => device.build_input_stream(
-            &config,
-            move |data: &[u16], _| {
-                let as_f32 = data
-                    .iter()
-                    .map(|s| (*s as f32 / u16::MAX as f32) - 0.5)
-                    .collect();
-                let _ = tx.try_send(interleave_to_mono(&as_f32, channels));
-            },
-            err_fn,
-            None,
-        ),
+    let err_fn = |err: cpal::StreamError| eprintln!("audio stream error: {err}");
+    let stream = match sample_format {
+        SampleFormat::F32 => {
+            let tx = tx;
+            device.build_input_stream(
+                &config,
+                move |data: &[f32], _| {
+                    let _ = tx.try_send(interleave_to_mono(data, channels));
+                },
+                err_fn,
+                None,
+            )
+        }
+        SampleFormat::I16 => {
+            let tx = tx;
+            device.build_input_stream(
+                &config,
+                move |data: &[i16], _| {
+                    let as_f32: Vec<f32> = data.iter().map(|s| *s as f32 / i16::MAX as f32).collect();
+                    let _ = tx.try_send(interleave_to_mono(&as_f32, channels));
+                },
+                err_fn,
+                None,
+            )
+        }
+        SampleFormat::U16 => {
+            let tx = tx;
+            device.build_input_stream(
+                &config,
+                move |data: &[u16], _| {
+                    let as_f32: Vec<f32> = data
+                        .iter()
+                        .map(|s| (*s as f32 / u16::MAX as f32) - 0.5)
+                        .collect();
+                    let _ = tx.try_send(interleave_to_mono(&as_f32, channels));
+                },
+                err_fn,
+                None,
+            )
+        }
         _ => return Err("Unsupported sample format.".to_string()),
     }
-    .map_err(|e| e.to_string())
+    .map_err(|e| e.to_string())?;
+    Ok(SendStream(stream))
 }
 
 async fn run_pipeline(
@@ -198,10 +217,10 @@ async fn run_pipeline(
 ) {
     let mut buffer: VecDeque<f32> = VecDeque::new();
     let mut last_speech = tokio::time::Instant::now();
-    let mut context = match WhisperContext::new(&model_path) {
+    let mut context = match WhisperContext::new_with_params(&model_path, whisper_rs::WhisperContextParameters::default()) {
         Ok(ctx) => ctx,
         Err(err) => {
-            let _ = app.emit_all(
+            let _ = app.emit(
                 "stt-text-chunk",
                 SttEvent {
                     text: format!("STT error: {err}"),
@@ -241,8 +260,11 @@ async fn run_pipeline(
             params.set_n_threads(4);
             state.full(params, &resampled)?;
             let mut text = String::new();
-            for i in 0..state.full_n_segments() {
-                text.push_str(state.full_get_segment_text(i)?);
+            let n_segments = state.full_n_segments().unwrap_or(0);
+            for i in 0..n_segments {
+                if let Ok(segment_text) = state.full_get_segment_text(i) {
+                    text.push_str(&segment_text);
+                }
             }
             Ok::<_, whisper_rs::WhisperError>(text)
         }) {
@@ -252,7 +274,7 @@ async fn run_pipeline(
 
         if !transcript.trim().is_empty() {
             let audio_path = save_audio_segment(&vault_path, &resampled).await.ok();
-            let _ = app.emit_all(
+            let _ = app.emit(
                 "stt-text-chunk",
                 SttEvent {
                     text: transcript.trim().to_string(),
@@ -322,13 +344,13 @@ async fn save_audio_segment(vault_path: &str, samples: &[f32]) -> Result<String,
             sample_format: WavSampleFormat::Int,
         };
         let mut writer =
-            WavWriter::create(&target, spec).map_err(|e| e.to_string())?;
+            WavWriter::create(&target, spec).map_err(|e: hound::Error| e.to_string())?;
         for sample in samples {
             let value = (sample * i16::MAX as f32)
                 .clamp(i16::MIN as f32, i16::MAX as f32) as i16;
-            writer.write_sample(value).map_err(|e| e.to_string())?;
+            writer.write_sample(value).map_err(|e: hound::Error| e.to_string())?;
         }
-        writer.finalize().map_err(|e| e.to_string())?;
+        writer.finalize().map_err(|e: hound::Error| e.to_string())?;
         Ok(())
     })
     .await
