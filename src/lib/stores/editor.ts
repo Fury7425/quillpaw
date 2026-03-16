@@ -1,8 +1,8 @@
-import { get, writable } from 'svelte/store';
+import { get, writable } from "svelte/store";
 
-import type { NoteContent } from '$lib/types';
-import { tauriInvoke } from '$lib/utils/tauri_bridge';
-import { pushToast } from '$lib/stores/ui';
+import type { NoteContent } from "$lib/types";
+import { tauriInvoke } from "$lib/utils/tauri_bridge";
+import { pushToast } from "$lib/stores/ui";
 
 export type NoteTab = {
   path: string;
@@ -13,7 +13,7 @@ export type NoteTab = {
 export const openTabs = writable<NoteTab[]>([]);
 export const activePath = writable<string | null>(null);
 export const activeNote = writable<NoteContent | null>(null);
-export const noteBody = writable<string>('');
+export const noteBody = writable<string>("");
 export const insertRequest = writable<string | null>(null);
 
 const noteCache = new Map<string, NoteContent>();
@@ -22,7 +22,7 @@ export async function openNote(path: string): Promise<void> {
   try {
     let note = noteCache.get(path);
     if (!note) {
-      note = await tauriInvoke<NoteContent>('read_note', { path });
+      note = await tauriInvoke<NoteContent>("read_note", { path });
       noteCache.set(path, note);
     }
     activeNote.set(note);
@@ -43,7 +43,7 @@ export function updateBody(body: string): void {
   const path = get(activePath);
   if (!path) return;
   openTabs.update((tabs) =>
-    tabs.map((tab) => (tab.path === path ? { ...tab, dirty: true } : tab))
+    tabs.map((tab) => (tab.path === path ? { ...tab, dirty: true } : tab)),
   );
 }
 
@@ -52,9 +52,9 @@ export async function saveActiveNote(): Promise<void> {
   const body = get(noteBody);
   if (!path) return;
   try {
-    await tauriInvoke('save_note', { path, content: body });
+    await tauriInvoke("save_note", { path, content: body });
     openTabs.update((tabs) =>
-      tabs.map((tab) => (tab.path === path ? { ...tab, dirty: false } : tab))
+      tabs.map((tab) => (tab.path === path ? { ...tab, dirty: false } : tab)),
     );
     const cached = noteCache.get(path);
     if (cached) {
@@ -76,7 +76,7 @@ export function closeTab(path: string): void {
     } else {
       activePath.set(null);
       activeNote.set(null);
-      noteBody.set('');
+      noteBody.set("");
     }
   }
 }

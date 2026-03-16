@@ -1,71 +1,100 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import { openVault, createNote, createFolder, focusedPath, focusedIsFolder, vaultPath, toVaultRelative } from '$lib/stores/vault';
-  import { openNote } from '$lib/stores/editor';
-  import { closeCommand, toggleLeft, toggleRight, toggleSettings } from '$lib/stores/ui';
+  import { createEventDispatcher } from "svelte";
+  import {
+    openVault,
+    createNote,
+    createFolder,
+    focusedPath,
+    focusedIsFolder,
+    vaultPath,
+    toVaultRelative,
+  } from "$lib/stores/vault";
+  import { openNote } from "$lib/stores/editor";
+  import {
+    closeCommand,
+    toggleLeft,
+    toggleRight,
+    toggleSettings,
+  } from "$lib/stores/ui";
 
   export let open = false;
 
-  let query = '';
+  let query = "";
   const dispatch = createEventDispatcher();
 
   const commands = [
-    { id: 'open-vault', label: 'Open Vault', action: () => openVault() },
-    { id: 'new-note', label: 'New Note', action: async () => {
-      const title = window.prompt('Note title');
-      if (!title) return;
-      const vault = $vaultPath;
-      if (!vault) return;
-      const focused = $focusedIsFolder ? $focusedPath ?? vault : $focusedPath ?? vault;
-      const base = $focusedIsFolder
-        ? focused
-        : focused
-            .split(/[/\\]/)
-            .slice(0, -1)
-            .join('/') || vault;
-      const folder = toVaultRelative(base ?? vault, vault);
-      const path = await createNote(folder, title);
-      if (path) openNote(path);
-    }},
-    { id: 'new-folder', label: 'New Folder', action: async () => {
-      const name = window.prompt('Folder name');
-      if (!name) return;
-      const vault = $vaultPath;
-      if (!vault) return;
-      const focused = $focusedIsFolder ? $focusedPath ?? vault : $focusedPath ?? vault;
-      const base = $focusedIsFolder
-        ? focused
-        : focused
-            .split(/[/\\]/)
-            .slice(0, -1)
-            .join('/') || vault;
-      const relative = toVaultRelative(base ?? vault, vault);
-      const folderPath = relative ? `${relative}/${name}` : name;
-      await createFolder(folderPath);
-    }},
-    { id: 'toggle-left', label: 'Toggle Left Panel', action: () => toggleLeft() },
-    { id: 'toggle-right', label: 'Toggle Right Panel', action: () => toggleRight() },
-    { id: 'settings', label: 'Settings', action: () => toggleSettings() }
+    { id: "open-vault", label: "Open Vault", action: () => openVault() },
+    {
+      id: "new-note",
+      label: "New Note",
+      action: async () => {
+        const title = window.prompt("Note title");
+        if (!title) return;
+        const vault = $vaultPath;
+        if (!vault) return;
+        const focused = $focusedIsFolder
+          ? ($focusedPath ?? vault)
+          : ($focusedPath ?? vault);
+        const base = $focusedIsFolder
+          ? focused
+          : focused.split(/[/\\]/).slice(0, -1).join("/") || vault;
+        const folder = toVaultRelative(base ?? vault, vault);
+        const path = await createNote(folder, title);
+        if (path) openNote(path);
+      },
+    },
+    {
+      id: "new-folder",
+      label: "New Folder",
+      action: async () => {
+        const name = window.prompt("Folder name");
+        if (!name) return;
+        const vault = $vaultPath;
+        if (!vault) return;
+        const focused = $focusedIsFolder
+          ? ($focusedPath ?? vault)
+          : ($focusedPath ?? vault);
+        const base = $focusedIsFolder
+          ? focused
+          : focused.split(/[/\\]/).slice(0, -1).join("/") || vault;
+        const relative = toVaultRelative(base ?? vault, vault);
+        const folderPath = relative ? `${relative}/${name}` : name;
+        await createFolder(folderPath);
+      },
+    },
+    {
+      id: "toggle-left",
+      label: "Toggle Left Panel",
+      action: () => toggleLeft(),
+    },
+    {
+      id: "toggle-right",
+      label: "Toggle Right Panel",
+      action: () => toggleRight(),
+    },
+    { id: "settings", label: "Settings", action: () => toggleSettings() },
   ];
 
-  $: filtered = commands.filter((cmd) => cmd.label.toLowerCase().includes(query.toLowerCase()));
+  $: filtered = commands.filter((cmd) =>
+    cmd.label.toLowerCase().includes(query.toLowerCase()),
+  );
 
   const run = async (action: () => void | Promise<void>) => {
     await action();
     closeCommand();
-    query = '';
-    dispatch('close');
+    query = "";
+    dispatch("close");
   };
 
   const handleBackdropKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+    if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       closeCommand();
     }
   };
 
   const handleModalKeydown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
+    if (event.key === "Escape") {
       event.preventDefault();
       closeCommand();
     }

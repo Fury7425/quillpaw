@@ -1,9 +1,9 @@
-import { writable } from 'svelte/store';
+import { writable } from "svelte/store";
 
 export type Toast = {
   id: string;
   message: string;
-  type: 'error' | 'info';
+  type: "error" | "info";
 };
 
 export type UiState = {
@@ -13,10 +13,10 @@ export type UiState = {
   commandOpen: boolean;
   settingsOpen: boolean;
   lectureOpen: boolean;
-  searchMode: 'keyword' | 'semantic' | 'smart';
+  searchMode: "keyword" | "semantic" | "smart";
   drawingOpen: boolean;
   drawingFile: string | null;
-  theme: 'Dark Warm' | 'Dark Cool' | 'Light Parchment';
+  theme: "Dark Warm" | "Dark Cool" | "Light Parchment";
 };
 
 export const uiState = writable<UiState>({
@@ -26,15 +26,18 @@ export const uiState = writable<UiState>({
   commandOpen: false,
   settingsOpen: false,
   lectureOpen: false,
-  searchMode: 'keyword',
+  searchMode: "keyword",
   drawingOpen: false,
   drawingFile: null,
-  theme: 'Dark Warm'
+  theme: "Dark Warm",
 });
 
 export const toasts = writable<Toast[]>([]);
 
-export function pushToast(message: string, type: 'error' | 'info' = 'error'): void {
+export function pushToast(
+  message: string,
+  type: "error" | "info" = "error",
+): void {
   const id = crypto.randomUUID();
   toasts.update((list) => [...list, { id, message, type }]);
   setTimeout(() => {
@@ -50,7 +53,7 @@ export function toggleRight(): void {
   uiState.update((state) => ({ ...state, rightOpen: !state.rightOpen }));
 }
 
-export function openSearch(mode: UiState['searchMode']): void {
+export function openSearch(mode: UiState["searchMode"]): void {
   uiState.update((state) => ({ ...state, searchOpen: true, searchMode: mode }));
 }
 
@@ -75,7 +78,7 @@ export function closeOverlays(): void {
     ...state,
     searchOpen: false,
     commandOpen: false,
-    settingsOpen: false
+    settingsOpen: false,
   }));
 }
 
@@ -84,9 +87,17 @@ export function toggleLecture(): void {
 }
 
 export function openDrawing(filename: string): void {
-  uiState.update((state) => ({ ...state, drawingOpen: true, drawingFile: filename }));
+  uiState.update((state) => ({
+    ...state,
+    drawingOpen: true,
+    drawingFile: filename,
+  }));
 }
 
 export function closeDrawing(): void {
-  uiState.update((state) => ({ ...state, drawingOpen: false, drawingFile: null }));
+  uiState.update((state) => ({
+    ...state,
+    drawingOpen: false,
+    drawingFile: null,
+  }));
 }

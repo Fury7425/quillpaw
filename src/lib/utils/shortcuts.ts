@@ -7,7 +7,10 @@ export type Shortcut = {
   preventDefault?: boolean;
 };
 
-export function matchShortcut(event: KeyboardEvent, shortcut: Shortcut): boolean {
+export function matchShortcut(
+  event: KeyboardEvent,
+  shortcut: Shortcut,
+): boolean {
   const key = event.key.toLowerCase();
   if (key !== shortcut.key.toLowerCase()) return false;
   if (Boolean(shortcut.ctrl) !== (event.ctrlKey || event.metaKey)) return false;
@@ -28,6 +31,6 @@ export function registerShortcuts(shortcuts: Shortcut[]): () => void {
       }
     }
   };
-  window.addEventListener('keydown', handler);
-  return () => window.removeEventListener('keydown', handler);
+  window.addEventListener("keydown", handler);
+  return () => window.removeEventListener("keydown", handler);
 }

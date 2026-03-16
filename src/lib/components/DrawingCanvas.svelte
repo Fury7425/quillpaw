@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
-  import { uiState, closeDrawing } from '$lib/stores/ui';
-  import { vaultPath } from '$lib/stores/vault';
-  import { tauriInvoke } from '$lib/utils/tauri_bridge';
+  import { onDestroy, onMount } from "svelte";
+  import { uiState, closeDrawing } from "$lib/stores/ui";
+  import { vaultPath } from "$lib/stores/vault";
+  import { tauriInvoke } from "$lib/utils/tauri_bridge";
 
   type StrokePoint = [number, number, number];
   type Stroke = {
     id: string;
-    tool: 'pen' | 'highlighter' | 'eraser';
+    tool: "pen" | "highlighter" | "eraser";
     color: string;
     width: number;
     opacity: number;
@@ -19,11 +19,17 @@
   let drawing = false;
   let strokes: Stroke[] = [];
   let currentStroke: Stroke | null = null;
-  let color = '';
+  let color = "";
   let width = 2.5;
-  let tool: Stroke['tool'] = 'pen';
-  let baseColor = '';
-  const colorVars = ['--accent', '--accent-bright', '--text-primary', '--accent2', '--success'];
+  let tool: Stroke["tool"] = "pen";
+  let baseColor = "";
+  const colorVars = [
+    "--accent",
+    "--accent-bright",
+    "--text-primary",
+    "--accent2",
+    "--success",
+  ];
   let colors: string[] = [];
 
   const resizeCanvas = () => {
@@ -31,7 +37,7 @@
     const ratio = window.devicePixelRatio || 1;
     canvas.width = canvas.clientWidth * ratio;
     canvas.height = canvas.clientHeight * ratio;
-    ctx = canvas.getContext('2d');
+    ctx = canvas.getContext("2d");
     if (ctx) ctx.scale(ratio, ratio);
     redraw();
   };
@@ -43,15 +49,15 @@
     const point: StrokePoint = [
       event.clientX - rect.left,
       event.clientY - rect.top,
-      event.pressure || 0.5
+      event.pressure || 0.5,
     ];
     currentStroke = {
       id: crypto.randomUUID(),
       tool,
       color,
       width,
-      opacity: tool === 'highlighter' ? 0.4 : 1,
-      points: [point]
+      opacity: tool === "highlighter" ? 0.4 : 1,
+      points: [point],
     };
     strokes.push(currentStroke);
   };
@@ -62,7 +68,7 @@
     const point: StrokePoint = [
       event.clientX - rect.left,
       event.clientY - rect.top,
-      event.pressure || 0.5
+      event.pressure || 0.5,
     ];
     currentStroke.points.push(point);
     drawStrokeSegment(currentStroke);
@@ -81,9 +87,9 @@
     if (points.length < 2) return;
     const [p1, p2] = points.slice(-2);
     ctx.globalAlpha = stroke.opacity;
-    ctx.strokeStyle = stroke.tool === 'eraser' ? baseColor : stroke.color;
+    ctx.strokeStyle = stroke.tool === "eraser" ? baseColor : stroke.color;
     ctx.lineWidth = stroke.width;
-    ctx.lineCap = 'round';
+    ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo(p1[0], p1[1]);
     ctx.lineTo(p2[0], p2[1]);
@@ -98,7 +104,7 @@
       for (let i = 1; i < stroke.points.length; i++) {
         const segment: Stroke = {
           ...stroke,
-          points: [stroke.points[i - 1], stroke.points[i]]
+          points: [stroke.points[i - 1], stroke.points[i]],
         };
         drawStrokeSegment(segment);
       }
@@ -113,12 +119,12 @@
       canvas: { width: 1920, height: 1080, background: baseColor },
       strokes,
       shapes: [],
-      text_layers: []
+      text_layers: [],
     };
-    await tauriInvoke('save_drawing', {
+    await tauriInvoke("save_drawing", {
       vaultPath: vault,
       filename: $uiState.drawingFile,
-      drawingJson: JSON.stringify(payload)
+      drawingJson: JSON.stringify(payload),
     });
   };
 
@@ -126,9 +132,9 @@
     const vault = $vaultPath;
     if (!vault || !$uiState.drawingFile) return;
     try {
-      const raw = await tauriInvoke<string>('load_drawing', {
+      const raw = await tauriInvoke<string>("load_drawing", {
         vaultPath: vault,
-        filename: $uiState.drawingFile
+        filename: $uiState.drawingFile,
       });
       const parsed = JSON.parse(raw);
       strokes = parsed.strokes ?? [];
@@ -141,15 +147,17 @@
 
   onMount(() => {
     const style = getComputedStyle(document.documentElement);
-    colors = colorVars.map((variable) => style.getPropertyValue(variable).trim());
-    baseColor = style.getPropertyValue('--bg-base').trim();
+    colors = colorVars.map((variable) =>
+      style.getPropertyValue(variable).trim(),
+    );
+    baseColor = style.getPropertyValue("--bg-base").trim();
     color = colors[0] ?? baseColor;
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener("resize", resizeCanvas);
   });
 
   onDestroy(() => {
-    window.removeEventListener('resize', resizeCanvas);
+    window.removeEventListener("resize", resizeCanvas);
   });
 
   $: if ($uiState.drawingOpen) {
@@ -164,7 +172,7 @@
         {#each colors as swatch, index}
           <button
             type="button"
-            class={`swatch ${color === swatch ? 'active' : ''}`}
+            class={`swatch ${color === swatch ? "active" : ""}`}
             style={`background:var(${colorVars[index]})`}
             aria-label={`Select color ${index + 1}`}
             on:click={() => (color = swatch)}
@@ -172,11 +180,19 @@
         {/each}
       </div>
       <div class="tools">
-        <button class:active={tool === 'pen'} on:click={() => (tool = 'pen')}>Pen</button>
-        <button class:active={tool === 'highlighter'} on:click={() => (tool = 'highlighter')}>
+        <button class:active={tool === "pen"} on:click={() => (tool = "pen")}
+          >Pen</button
+        >
+        <button
+          class:active={tool === "highlighter"}
+          on:click={() => (tool = "highlighter")}
+        >
           Highlighter
         </button>
-        <button class:active={tool === 'eraser'} on:click={() => (tool = 'eraser')}>Eraser</button>
+        <button
+          class:active={tool === "eraser"}
+          on:click={() => (tool = "eraser")}>Eraser</button
+        >
       </div>
       <label class="width">
         Width

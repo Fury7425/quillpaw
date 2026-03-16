@@ -1,26 +1,32 @@
 <script lang="ts">
-  import { get } from 'svelte/store';
-  import { aiEnabled, aiProposals, aiStatus, aiModelInfo, addProposal } from '$lib/stores/ai';
-  import { activePath, noteBody } from '$lib/stores/editor';
-  import { vaultPath } from '$lib/stores/vault';
-  import { pushToast } from '$lib/stores/ui';
-  import { tauriInvoke } from '$lib/utils/tauri_bridge';
-  import ProposalCard from '$lib/components/ProposalCard.svelte';
-  import type { AiProposal } from '$lib/types';
+  import { get } from "svelte/store";
+  import {
+    aiEnabled,
+    aiProposals,
+    aiStatus,
+    aiModelInfo,
+    addProposal,
+  } from "$lib/stores/ai";
+  import { activePath, noteBody } from "$lib/stores/editor";
+  import { vaultPath } from "$lib/stores/vault";
+  import { pushToast } from "$lib/stores/ui";
+  import { tauriInvoke } from "$lib/utils/tauri_bridge";
+  import ProposalCard from "$lib/components/ProposalCard.svelte";
+  import type { AiProposal } from "$lib/types";
 
-  let question = '';
+  let question = "";
   let busy = false;
 
   const ensureNote = (): string | null => {
     const path = get(activePath);
     if (!path) {
-      pushToast('Open a note to use AI actions.');
+      pushToast("Open a note to use AI actions.");
       return null;
     }
     return path;
   };
 
-  const runAction = async <T>(fn: () => Promise<T>) => {
+  const runAction = async <T,>(fn: () => Promise<T>) => {
     busy = true;
     try {
       return await fn();
@@ -35,9 +41,9 @@
     const path = ensureNote();
     if (!path) return;
     await runAction(async () => {
-      const proposal = await tauriInvoke<AiProposal>('summarize_note', {
+      const proposal = await tauriInvoke<AiProposal>("summarize_note", {
         noteContent: get(noteBody),
-        targetPath: path
+        targetPath: path,
       });
       addProposal(proposal);
     });
@@ -46,17 +52,17 @@
   const ask = async () => {
     const vault = get(vaultPath);
     if (!vault) {
-      pushToast('Open a vault to ask questions.');
+      pushToast("Open a vault to ask questions.");
       return;
     }
     await runAction(async () => {
-      const proposal = await tauriInvoke<AiProposal>('ask_question', {
+      const proposal = await tauriInvoke<AiProposal>("ask_question", {
         vaultPath: vault,
         question,
-        targetPath: get(activePath)
+        targetPath: get(activePath),
       });
       addProposal(proposal);
-      question = '';
+      question = "";
     });
   };
 
@@ -64,9 +70,9 @@
     const path = ensureNote();
     if (!path) return;
     await runAction(async () => {
-      const proposals = await tauriInvoke<AiProposal[]>('detect_reminders', {
+      const proposals = await tauriInvoke<AiProposal[]>("detect_reminders", {
         noteContent: get(noteBody),
-        targetPath: path
+        targetPath: path,
       });
       proposals.forEach(addProposal);
     });
@@ -77,10 +83,10 @@
     const path = ensureNote();
     if (!vault || !path) return;
     await runAction(async () => {
-      const proposal = await tauriInvoke<AiProposal>('suggest_tags', {
+      const proposal = await tauriInvoke<AiProposal>("suggest_tags", {
         vaultPath: vault,
         noteContent: get(noteBody),
-        targetPath: path
+        targetPath: path,
       });
       addProposal(proposal);
     });
@@ -103,7 +109,9 @@
 
   <div class="section">
     <h4>Actions</h4>
-    <button disabled={!$aiEnabled || busy} on:click={summarize}>Summarize</button>
+    <button disabled={!$aiEnabled || busy} on:click={summarize}
+      >Summarize</button
+    >
     <label class="field">
       <span>Ask a question</span>
       <input
@@ -112,9 +120,15 @@
         disabled={!$aiEnabled || busy}
       />
     </label>
-    <button disabled={!$aiEnabled || busy || !question.trim()} on:click={ask}>Ask Q&amp;A</button>
-    <button disabled={!$aiEnabled || busy} on:click={reminders}>Reminders Scan</button>
-    <button disabled={!$aiEnabled || busy} on:click={suggestTags}>Tag Suggestions</button>
+    <button disabled={!$aiEnabled || busy || !question.trim()} on:click={ask}
+      >Ask Q&amp;A</button
+    >
+    <button disabled={!$aiEnabled || busy} on:click={reminders}
+      >Reminders Scan</button
+    >
+    <button disabled={!$aiEnabled || busy} on:click={suggestTags}
+      >Tag Suggestions</button
+    >
   </div>
 
   <div class="section">

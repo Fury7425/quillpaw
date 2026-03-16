@@ -23,7 +23,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: "./src-tauri -> target"
       # usearch is pinned to =2.16.0 in Cargo.toml because later versions use
       # the `#warning` preprocessor directive which MSVC does not support
       # (fatal error C1021). This step updates the lock file to reflect the pin

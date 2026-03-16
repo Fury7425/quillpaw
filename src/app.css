@@ -1,33 +1,39 @@
 @import "tailwindcss";
 @import "katex/dist/katex.min.css";
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Literata:wght@400;600&family=Lora:wght@400;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Literata:wght@400;600&family=Lora:wght@400;600&display=swap");
 
 :root {
-  --bg-base: #1C1814;
-  --bg-panel: #17140F;
+  --bg-base: #1c1814;
+  --bg-panel: #17140f;
   --bg-surface: #252018;
-  --bg-elevated: #2E2820;
-  --border: #332C22;
-  --border-focus: #C9843A;
-  --border-subtle: #221E16;
-  --text-primary: #EDE0CC;
-  --text-secondary: #9E8E78;
-  --text-muted: #5C5040;
-  --accent: #C9843A;
-  --accent-bright: #E8A855;
+  --bg-elevated: #2e2820;
+  --border: #332c22;
+  --border-focus: #c9843a;
+  --border-subtle: #221e16;
+  --text-primary: #ede0cc;
+  --text-secondary: #9e8e78;
+  --text-muted: #5c5040;
+  --accent: #c9843a;
+  --accent-bright: #e8a855;
   --accent-subtle: rgba(201, 132, 58, 0.12);
   --accent-glow: rgba(201, 132, 58, 0.06);
-  --accent2: #A0705A;
+  --accent2: #a0705a;
   --accent2-subtle: rgba(160, 112, 90, 0.15);
-  --success: #6DAA72;
-  --warning: #C9A03A;
-  --danger: #B05A5A;
-  --font-ui: 'Literata', 'Georgia', serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-editor: 'Lora', 'Georgia', serif;
-  --space-1: 4px; --space-2: 8px; --space-3: 12px;
-  --space-4: 16px; --space-6: 24px; --space-8: 32px;
-  --radius-sm: 5px; --radius-md: 9px; --radius-lg: 14px;
+  --success: #6daa72;
+  --warning: #c9a03a;
+  --danger: #b05a5a;
+  --font-ui: "Literata", "Georgia", serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-editor: "Lora", "Georgia", serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 5px;
+  --radius-md: 9px;
+  --radius-lg: 14px;
   --transition: 140ms ease;
   --overlay: rgba(0, 0, 0, 0.6);
   --shadow-strong: 0 8px 40px rgba(0, 0, 0, 0.6);
@@ -36,47 +42,53 @@
 }
 
 [data-theme="Light Parchment"] {
-  --bg-base: #F8F4E6;
-  --bg-panel: #EAE3D2;
-  --bg-surface: #F1ECE1;
-  --bg-elevated: #FFFFFF;
-  --border: #D1C7B3;
-  --border-focus: #8B5A2B;
-  --border-subtle: #E3DCCB;
-  --text-primary: #2C2820;
-  --text-secondary: #5A5242;
-  --text-muted: #8C8270;
-  --accent: #D27D2D;
-  --accent-bright: #E89B45;
+  --bg-base: #f8f4e6;
+  --bg-panel: #eae3d2;
+  --bg-surface: #f1ece1;
+  --bg-elevated: #ffffff;
+  --border: #d1c7b3;
+  --border-focus: #8b5a2b;
+  --border-subtle: #e3dccb;
+  --text-primary: #2c2820;
+  --text-secondary: #5a5242;
+  --text-muted: #8c8270;
+  --accent: #d27d2d;
+  --accent-bright: #e89b45;
   --accent-subtle: rgba(210, 125, 45, 0.12);
   --accent-glow: rgba(210, 125, 45, 0.06);
-  --accent2: #6A4A3A;
+  --accent2: #6a4a3a;
   --accent2-subtle: rgba(106, 74, 58, 0.15);
   scrollbar-color: var(--border) var(--bg-panel);
 }
 
 [data-theme="Dark Cool"] {
-  --bg-base: #0F1419;
-  --bg-panel: #151A21;
-  --bg-surface: #1B222A;
+  --bg-base: #0f1419;
+  --bg-panel: #151a21;
+  --bg-surface: #1b222a;
   --bg-elevated: #222933;
-  --border: #2B3440;
-  --border-focus: #4F87C9;
-  --border-subtle: #1E252D;
-  --text-primary: #DCE3EA;
-  --text-secondary: #8B9BB4;
-  --text-muted: #57677D;
-  --accent: #4F87C9;
-  --accent-bright: #6B9EE0;
+  --border: #2b3440;
+  --border-focus: #4f87c9;
+  --border-subtle: #1e252d;
+  --text-primary: #dce3ea;
+  --text-secondary: #8b9bb4;
+  --text-muted: #57677d;
+  --accent: #4f87c9;
+  --accent-bright: #6b9ee0;
   --accent-subtle: rgba(79, 135, 201, 0.12);
   --accent-glow: rgba(79, 135, 201, 0.06);
-  --accent2: #7D5A9A;
+  --accent2: #7d5a9a;
   --accent2-subtle: rgba(125, 90, 154, 0.15);
   scrollbar-color: var(--border) var(--bg-panel);
 }
 
-* { box-sizing: border-box; }
-html, body, #svelte { height: 100%; }
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#svelte {
+  height: 100%;
+}
 body {
   margin: 0;
   background: var(--bg-base);
@@ -84,22 +96,47 @@ body {
   font-family: var(--font-ui);
   font-size: 13px;
 }
-a { color: inherit; text-decoration: none; }
-button, input, textarea, select {
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input,
+textarea,
+select {
   font: inherit;
   color: inherit;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
-button { cursor: pointer; }
-button:disabled { opacity: 0.6; cursor: default; }
-button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+button {
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-code, pre { font-family: var(--font-mono); }
+code,
+pre {
+  font-family: var(--font-mono);
+}
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-panel); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--radius-sm); }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-panel);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-sm);
+}
