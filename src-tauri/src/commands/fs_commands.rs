@@ -1,7 +1,6 @@
 use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 
-
 use crate::fs_manager;
 use crate::models::{FileNode, NoteContent};
 use crate::watcher;

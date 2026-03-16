@@ -34,7 +34,7 @@ struct SttState {
     stop_tx: Option<oneshot::Sender<()>>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct SttEvent {
     text: String,
     is_final: bool,
@@ -56,9 +56,7 @@ pub async fn start(app: tauri::AppHandle, vault_path: String) -> Result<(), Stri
         .clone()
         .ok_or_else(|| "STT model path not set.".to_string())?;
     let device = select_device(&guard.device_name)?;
-    let config = device
-        .default_input_config()
-        .map_err(|e| e.to_string())?;
+    let config = device.default_input_config().map_err(|e| e.to_string())?;
     let sample_rate = config.sample_rate().0;
     let channels = config.channels() as usize;
     let (tx, rx) = mpsc::channel::<Vec<f32>>(64);
@@ -178,7 +176,8 @@ fn build_stream(
             device.build_input_stream(
                 &config,
                 move |data: &[i16], _| {
-                    let as_f32: Vec<f32> = data.iter().map(|s| *s as f32 / i16::MAX as f32).collect();
+                    let as_f32: Vec<f32> =
+                        data.iter().map(|s| *s as f32 / i16::MAX as f32).collect();
                     let _ = tx.try_send(interleave_to_mono(&as_f32, channels));
                 },
                 err_fn,
@@ -217,7 +216,10 @@ async fn run_pipeline(
 ) {
     let mut buffer: VecDeque<f32> = VecDeque::new();
     let mut last_speech = tokio::time::Instant::now();
-    let mut context = match WhisperContext::new_with_params(&model_path, whisper_rs::WhisperContextParameters::default()) {
+    let mut context = match WhisperContext::new_with_params(
+        &model_path,
+        whisper_rs::WhisperContextParameters::default(),
+    ) {
         Ok(ctx) => ctx,
         Err(err) => {
             let _ = app.emit(
@@ -330,9 +332,7 @@ fn resample_linear(input: &[f32], input_rate: u32, output_rate: u32) -> Vec<f32>
 
 async fn save_audio_segment(vault_path: &str, samples: &[f32]) -> Result<String, String> {
     let filename = format!("lecture-{}.wav", Utc::now().timestamp_millis());
-    let path = Path::new(vault_path)
-        .join(".assets/audio")
-        .join(filename);
+    let path = Path::new(vault_path).join(".assets/audio").join(filename);
     fs_manager::ensure_vault_structure(vault_path).await?;
     let target = path.clone();
     let samples = samples.to_vec();
@@ -346,9 +346,10 @@ async fn save_audio_segment(vault_path: &str, samples: &[f32]) -> Result<String,
         let mut writer =
             WavWriter::create(&target, spec).map_err(|e: hound::Error| e.to_string())?;
         for sample in samples {
-            let value = (sample * i16::MAX as f32)
-                .clamp(i16::MIN as f32, i16::MAX as f32) as i16;
-            writer.write_sample(value).map_err(|e: hound::Error| e.to_string())?;
+            let value = (sample * i16::MAX as f32).clamp(i16::MIN as f32, i16::MAX as f32) as i16;
+            writer
+                .write_sample(value)
+                .map_err(|e: hound::Error| e.to_string())?;
         }
         writer.finalize().map_err(|e: hound::Error| e.to_string())?;
         Ok(())

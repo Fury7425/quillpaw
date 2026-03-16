@@ -3,15 +3,17 @@ use tauri::AppHandle;
 
 use crate::{
     ai_engine::{self, AiDeviceMode},
-    embeddings,
-    fs_manager,
+    embeddings, fs_manager,
     models::{AiModelStatus, AiProposal},
     search,
 };
 
 /// Load an AI model from disk.
 #[tauri::command]
-pub async fn load_ai_model(model_path: String, device_mode: String) -> Result<AiModelStatus, String> {
+pub async fn load_ai_model(
+    model_path: String,
+    device_mode: String,
+) -> Result<AiModelStatus, String> {
     let mode = parse_device_mode(&device_mode)?;
     ai_engine::load_model(&model_path, mode).await
 }
@@ -47,20 +49,16 @@ pub async fn download_ai_model(
 
 /// Summarize a note body and return a proposal.
 #[tauri::command]
-pub async fn summarize_note(note_content: String, target_path: String) -> Result<AiProposal, String> {
+pub async fn summarize_note(
+    note_content: String,
+    target_path: String,
+) -> Result<AiProposal, String> {
     ensure_model_loaded().await?;
     let summary = ai_engine::prompt(
         "You are a helpful assistant that summarizes notes. Provide a concise 2-3 sentence summary.",
         &format!("Summarize this note:\n\n{note_content}")
     ).await?;
-    ai_engine::make_proposal(
-        "summary",
-        "Summary",
-        &summary,
-        Some(target_path),
-        None,
-    )
-    .await
+    ai_engine::make_proposal("summary", "Summary", &summary, Some(target_path), None).await
 }
 
 /// Answer a question based on the vault context.
@@ -75,7 +73,10 @@ pub async fn ask_question(
     let mut context_text = String::new();
     for result in results.iter().take(3) {
         let content = fs_manager::read_note_file(&result.path).await?;
-        context_text.push_str(&format!("\nNote: {}\nContent: {}\n", result.title, content.body));
+        context_text.push_str(&format!(
+            "\nNote: {}\nContent: {}\n",
+            result.title, content.body
+        ));
     }
 
     let response = ai_engine::prompt(
@@ -137,8 +138,14 @@ pub async fn suggest_tags(
         format!("Suggested tags: {}", tags.join(", "))
     };
     let metadata = json!({ "tags": tags });
-    ai_engine::make_proposal("tags", "Tag Suggestions", &content, Some(target_path), Some(metadata))
-        .await
+    ai_engine::make_proposal(
+        "tags",
+        "Tag Suggestions",
+        &content,
+        Some(target_path),
+        Some(metadata),
+    )
+    .await
 }
 
 /// Apply an AI proposal to a target note.

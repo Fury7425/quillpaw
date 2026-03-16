@@ -6,8 +6,8 @@ use chrono::Utc;
 use futures_util::StreamExt;
 use llama_cpp_2::context::params::LlamaContextParams;
 use llama_cpp_2::llama_backend::LlamaBackend;
-use llama_cpp_2::model::LlamaModel;
 use llama_cpp_2::model::params::LlamaModelParams;
+use llama_cpp_2::model::LlamaModel;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Emitter};
@@ -73,16 +73,26 @@ pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
 
         let ctx_params = LlamaContextParams::default()
             .with_n_ctx(Some(std::num::NonZeroU32::new(2048).unwrap()));
-        let mut context = loaded.model.new_context(&loaded.backend, ctx_params)
+        let mut context = loaded
+            .model
+            .new_context(&loaded.backend, ctx_params)
             .map_err(|e| e.to_string())?;
 
-        let prompt_text = format!("<|system|>\n{}\n<|user|>\n{}\n<|assistant|>\n", system_owned, user_owned);
-        let tokens = loaded.model.str_to_token(&prompt_text, llama_cpp_2::model::AddBos::Always).map_err(|e| e.to_string())?;
+        let prompt_text = format!(
+            "<|system|>\n{}\n<|user|>\n{}\n<|assistant|>\n",
+            system_owned, user_owned
+        );
+        let tokens = loaded
+            .model
+            .str_to_token(&prompt_text, llama_cpp_2::model::AddBos::Always)
+            .map_err(|e| e.to_string())?;
 
         let mut batch = llama_cpp_2::llama_batch::LlamaBatch::new(tokens.len() + 512, 1);
         for (i, &token) in tokens.iter().enumerate() {
             let last = i == tokens.len() - 1;
-            batch.add(token, i as i32, &[0i32], last).map_err(|e| e.to_string())?;
+            batch
+                .add(token, i as i32, &[0i32], last)
+                .map_err(|e| e.to_string())?;
         }
 
         context.decode(&mut batch).map_err(|e| e.to_string())?;
@@ -103,13 +113,18 @@ pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
                 break;
             }
 
-            let piece_bytes = loaded.model.token_to_bytes(token, llama_cpp_2::model::Special::Tokenize).map_err(|e| e.to_string())?;
+            let piece_bytes = loaded
+                .model
+                .token_to_bytes(token, llama_cpp_2::model::Special::Tokenize)
+                .map_err(|e| e.to_string())?;
             if let Ok(piece_str) = String::from_utf8(piece_bytes) {
                 output.push_str(&piece_str);
             }
 
             batch.clear();
-            batch.add(token, n_cur as i32, &[0i32], true).map_err(|e| e.to_string())?;
+            batch
+                .add(token, n_cur as i32, &[0i32], true)
+                .map_err(|e| e.to_string())?;
             context.decode(&mut batch).map_err(|e| e.to_string())?;
             n_cur += 1;
         }
@@ -121,7 +136,10 @@ pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
 }
 
 /// Load a GGUF model into the AI runtime.
-pub async fn load_model(model_path: &str, device_mode: AiDeviceMode) -> Result<AiModelStatus, String> {
+pub async fn load_model(
+    model_path: &str,
+    device_mode: AiDeviceMode,
+) -> Result<AiModelStatus, String> {
     let path = Path::new(model_path);
     if !path.exists() {
         return Err("Model file not found.".to_string());
@@ -295,7 +313,7 @@ struct ModelSpec {
     url: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct ModelDownloadProgress {
     model_id: String,
     downloaded: u64,
@@ -360,7 +378,8 @@ fn detect_npu_blocking() -> Result<bool, String> {
 
     let com_lib = COMLibrary::new().map_err(|e| e.to_string())?;
     let wmi_con = WMIConnection::new(com_lib.into()).map_err(|e| e.to_string())?;
-    let query = "SELECT Name FROM Win32_PnPEntity WHERE Name LIKE '%NPU%' OR Name LIKE '%AI Boost%'";
+    let query =
+        "SELECT Name FROM Win32_PnPEntity WHERE Name LIKE '%NPU%' OR Name LIKE '%AI Boost%'";
     let results: Vec<PnpEntity> = wmi_con.raw_query(query).map_err(|e| e.to_string())?;
     Ok(results.iter().any(|item| {
         item.name

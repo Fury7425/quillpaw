@@ -22,14 +22,20 @@ pub async fn ensure_vault_structure(vault_path: &str) -> Result<(), String> {
         ".assets/audio",
         ".assets/files",
     ];
-    let system = [".quillpaw/index", ".quillpaw/embeddings", ".quillpaw/models"];
+    let system = [
+        ".quillpaw/index",
+        ".quillpaw/embeddings",
+        ".quillpaw/models",
+    ];
     for folder in assets.iter().chain(system.iter()) {
         let path = Path::new(vault_path).join(folder);
         fs::create_dir_all(&path).await.map_err(|e| e.to_string())?;
     }
     let config_path = Path::new(vault_path).join(".quillpaw/config.json");
     if fs::metadata(&config_path).await.is_err() {
-        fs::write(&config_path, "{}").await.map_err(|e| e.to_string())?;
+        fs::write(&config_path, "{}")
+            .await
+            .map_err(|e| e.to_string())?;
     }
     Ok(())
 }
@@ -245,7 +251,10 @@ pub async fn save_atomic(path: &str, content: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn build_tree_inner(path: &Path) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<FileNode>, String>> + Send + '_>> {
+fn build_tree_inner(
+    path: &Path,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Vec<FileNode>, String>> + Send + '_>>
+{
     Box::pin(async move {
         let mut nodes = vec![];
         let mut dir = fs::read_dir(path).await.map_err(|e| e.to_string())?;
@@ -309,10 +318,7 @@ fn parse_frontmatter(content: &str) -> (Frontmatter, String) {
 }
 
 fn build_frontmatter(meta: &Frontmatter) -> String {
-    let title = meta
-        .title
-        .clone()
-        .unwrap_or_else(|| "Untitled".to_string());
+    let title = meta.title.clone().unwrap_or_else(|| "Untitled".to_string());
     let created = meta
         .created
         .clone()
@@ -356,10 +362,7 @@ fn strip_quotes(value: &str) -> String {
 
 fn parse_list_value(value: &str) -> Vec<String> {
     let trimmed = value.trim();
-    let content = trimmed
-        .trim_start_matches('[')
-        .trim_end_matches(']')
-        .trim();
+    let content = trimmed.trim_start_matches('[').trim_end_matches(']').trim();
     if content.is_empty() {
         return vec![];
     }

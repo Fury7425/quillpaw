@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use tantivy::collector::TopDocs;
-use tantivy::schema::{Field, Schema, SchemaBuilder, STORED, STRING, TEXT};
+use tantivy::schema::{Field, Schema, SchemaBuilder, Value, STORED, STRING, TEXT};
 use tantivy::snippet::SnippetGenerator;
 use tantivy::{doc, Index};
 use walkdir::WalkDir;
@@ -16,10 +16,7 @@ pub async fn build_index(vault_path: &str) -> Result<(), String> {
         let mut writer = index.writer(50_000_000).map_err(|e| e.to_string())?;
         writer.delete_all_documents().map_err(|e| e.to_string())?;
         let (_, fields) = schema_fields();
-        for entry in WalkDir::new(&vault_path)
-            .into_iter()
-            .filter_map(Result::ok)
-        {
+        for entry in WalkDir::new(&vault_path).into_iter().filter_map(Result::ok) {
             if !entry.file_type().is_file() {
                 continue;
             }
@@ -67,11 +64,12 @@ pub async fn keyword_search(vault_path: &str, query: &str) -> Result<Vec<SearchR
         let top_docs = searcher
             .search(&query, &TopDocs::with_limit(25))
             .map_err(|e| e.to_string())?;
-        let snippet_gen = SnippetGenerator::create(&searcher, &query, fields.body)
-            .map_err(|e| e.to_string())?;
+        let snippet_gen =
+            SnippetGenerator::create(&searcher, &query, fields.body).map_err(|e| e.to_string())?;
         let mut results = vec![];
         for (score, doc_address) in top_docs {
-            let retrieved: tantivy::TantivyDocument = searcher.doc(doc_address).map_err(|e| e.to_string())?;
+            let retrieved: tantivy::TantivyDocument =
+                searcher.doc(doc_address).map_err(|e| e.to_string())?;
             let path = retrieved
                 .get_first(fields.path)
                 .and_then(|v: &tantivy::schema::OwnedValue| v.as_str())
@@ -147,9 +145,7 @@ fn open_or_create_index(vault_path: &str) -> Result<Index, String> {
 
 fn should_skip_path(path: &Path) -> bool {
     path.components().any(|c| {
-        c.as_os_str()
-            .to_string_lossy()
-            .starts_with(".quillpaw")
+        c.as_os_str().to_string_lossy().starts_with(".quillpaw")
             || c.as_os_str().to_string_lossy().starts_with(".assets")
     })
 }
@@ -197,10 +193,7 @@ fn strip_quotes(value: &str) -> String {
 
 fn parse_list_value(value: &str) -> Vec<String> {
     let trimmed = value.trim();
-    let content = trimmed
-        .trim_start_matches('[')
-        .trim_end_matches(']')
-        .trim();
+    let content = trimmed.trim_start_matches('[').trim_end_matches(']').trim();
     if content.is_empty() {
         return vec![];
     }
@@ -212,5 +205,7 @@ fn parse_list_value(value: &str) -> Vec<String> {
 }
 
 fn title_from_path(path: &Path) -> &str {
-    path.file_stem().and_then(|s| s.to_str()).unwrap_or("Untitled")
+    path.file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("Untitled")
 }

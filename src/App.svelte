@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { PenNib, Minus, Square, X } from 'phosphor-svelte';
-  import { getCurrentWindow } from '@tauri-apps/api/window';
-  import { get } from 'svelte/store';
+  import { onMount } from "svelte";
+  import { PenNib, Minus, Square, X } from "phosphor-svelte";
+  import { getCurrentWindow } from "@tauri-apps/api/window";
+  import { get } from "svelte/store";
 
-  import FileTree from '$lib/components/FileTree.svelte';
-  import Editor from '$lib/components/Editor.svelte';
-  import AIPanel from '$lib/components/AIPanel.svelte';
-  import TabBar from '$lib/components/TabBar.svelte';
-  import Settings from '$lib/components/Settings.svelte';
-  import SearchModal from '$lib/components/SearchModal.svelte';
-  import CommandPalette from '$lib/components/CommandPalette.svelte';
-  import LectureMode from '$lib/components/LectureMode.svelte';
-  import DrawingCanvas from '$lib/components/DrawingCanvas.svelte';
+  import FileTree from "$lib/components/FileTree.svelte";
+  import Editor from "$lib/components/Editor.svelte";
+  import AIPanel from "$lib/components/AIPanel.svelte";
+  import TabBar from "$lib/components/TabBar.svelte";
+  import Settings from "$lib/components/Settings.svelte";
+  import SearchModal from "$lib/components/SearchModal.svelte";
+  import CommandPalette from "$lib/components/CommandPalette.svelte";
+  import LectureMode from "$lib/components/LectureMode.svelte";
+  import DrawingCanvas from "$lib/components/DrawingCanvas.svelte";
 
   import {
     openVault,
@@ -22,8 +22,8 @@
     toVaultRelative,
     createNote,
     renameItem,
-    deleteItem
-  } from '$lib/stores/vault';
+    deleteItem,
+  } from "$lib/stores/vault";
   import {
     activeNote,
     noteBody,
@@ -32,8 +32,8 @@
     openNote,
     closeTab,
     saveActiveNote,
-    requestInsert
-  } from '$lib/stores/editor';
+    requestInsert,
+  } from "$lib/stores/editor";
   import {
     uiState,
     toggleLeft,
@@ -44,28 +44,28 @@
     closeOverlays,
     toggleLecture,
     toasts,
-    openDrawing
-  } from '$lib/stores/ui';
-  import { registerShortcuts } from '$lib/utils/shortcuts';
-  import { tauriInvoke } from '$lib/utils/tauri_bridge';
+    openDrawing,
+  } from "$lib/stores/ui";
+  import { registerShortcuts } from "$lib/utils/shortcuts";
+  import { tauriInvoke } from "$lib/utils/tauri_bridge";
 
   let appWindow = getCurrentWindow();
   let leftWidth = 280;
   let rightWidth = 320;
 
-  const handleWindow = (action: 'min' | 'max' | 'close') => {
-    if (action === 'min') appWindow.minimize();
-    if (action === 'max') appWindow.toggleMaximize();
-    if (action === 'close') appWindow.close();
+  const handleWindow = (action: "min" | "max" | "close") => {
+    if (action === "min") appWindow.minimize();
+    if (action === "max") appWindow.toggleMaximize();
+    if (action === "close") appWindow.close();
   };
 
   const shouldIgnoreShortcut = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement | null;
     if (!target) return false;
     return (
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.getAttribute('contenteditable') === 'true'
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.getAttribute("contenteditable") === "true"
     );
   };
 
@@ -74,14 +74,15 @@
     if (!tabs.length) return;
     const current = get(activePath);
     const index = tabs.findIndex((tab) => tab.path === current);
-    const nextIndex = index === -1 ? 0 : (index + direction + tabs.length) % tabs.length;
+    const nextIndex =
+      index === -1 ? 0 : (index + direction + tabs.length) % tabs.length;
     openNote(tabs[nextIndex].path);
   };
 
-  const startResize = (side: 'left' | 'right', event: PointerEvent) => {
+  const startResize = (side: "left" | "right", event: PointerEvent) => {
     event.preventDefault();
     const onMove = (moveEvent: PointerEvent) => {
-      if (side === 'left') {
+      if (side === "left") {
         leftWidth = Math.min(Math.max(200, moveEvent.clientX), 480);
       } else {
         const width = window.innerWidth - moveEvent.clientX;
@@ -89,28 +90,28 @@
       }
     };
     const onUp = () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
     };
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
   };
 
   const createNoteFromShortcut = async (useFolderPicker: boolean) => {
     const vault = get(vaultPath);
     if (!vault) return;
-    const title = window.prompt('Note title');
+    const title = window.prompt("Note title");
     if (!title) return;
-    let folder = '';
+    let folder = "";
     if (useFolderPicker) {
-      const folderInput = window.prompt('Folder (relative to vault)');
+      const folderInput = window.prompt("Folder (relative to vault)");
       if (folderInput) folder = folderInput;
     } else if (get(focusedPath)) {
       const focus = get(focusedPath);
       const isFolder = get(focusedIsFolder);
       const base = isFolder
         ? focus
-        : focus?.split(/[/\\]/).slice(0, -1).join('/') || vault;
+        : focus?.split(/[/\\]/).slice(0, -1).join("/") || vault;
       folder = toVaultRelative(base ?? vault, vault);
     }
     const path = await createNote(folder, title);
@@ -120,7 +121,7 @@
   const renameFocused = async () => {
     const path = get(focusedPath);
     if (!path) return;
-    const name = window.prompt('New name');
+    const name = window.prompt("New name");
     if (!name) return;
     await renameItem(path, name);
   };
@@ -129,9 +130,9 @@
     const vault = get(vaultPath);
     if (!vault) return;
     const style = getComputedStyle(document.documentElement);
-    const baseColor = style.getPropertyValue('--bg-base').trim();
+    const baseColor = style.getPropertyValue("--bg-base").trim();
     const filename = `drawing-${Date.now()}.json`;
-    await tauriInvoke('save_drawing', {
+    await tauriInvoke("save_drawing", {
       vaultPath: vault,
       filename,
       drawingJson: JSON.stringify({
@@ -139,8 +140,8 @@
         canvas: { width: 1920, height: 1080, background: baseColor },
         strokes: [],
         shapes: [],
-        text_layers: []
-      })
+        text_layers: [],
+      }),
     });
     requestInsert(`![[${filename}]]`);
     openDrawing(filename);
@@ -149,34 +150,63 @@
   const deleteFocused = async () => {
     const path = get(focusedPath);
     if (!path) return;
-    const confirmed = window.confirm('Delete selected item?');
+    const confirmed = window.confirm("Delete selected item?");
     if (!confirmed) return;
     await deleteItem(path);
   };
 
   onMount(() => {
-    const wrap = (handler: (event: KeyboardEvent) => void) => (event: KeyboardEvent) => {
-      if (shouldIgnoreShortcut(event)) return;
-      handler(event);
-    };
+    const wrap =
+      (handler: (event: KeyboardEvent) => void) => (event: KeyboardEvent) => {
+        if (shouldIgnoreShortcut(event)) return;
+        handler(event);
+      };
     const unregister = registerShortcuts([
-      { key: 'n', ctrl: true, handler: wrap(() => createNoteFromShortcut(false)) },
-      { key: 'n', ctrl: true, shift: true, handler: wrap(() => createNoteFromShortcut(true)) },
-      { key: 'p', ctrl: true, handler: wrap(() => openCommand()) },
-      { key: 'f', ctrl: true, shift: true, handler: () => openSearch('keyword') },
-      { key: 's', ctrl: true, shift: true, handler: () => openSearch('smart') },
-      { key: 'b', ctrl: true, handler: () => toggleLeft() },
-      { key: '/', ctrl: true, handler: () => toggleRight() },
-      { key: 'w', ctrl: true, handler: wrap(() => get(activePath) && closeTab(get(activePath) ?? '')) },
-      { key: 'tab', ctrl: true, handler: wrap(() => cycleTab(1)) },
-      { key: 'tab', ctrl: true, shift: true, handler: wrap(() => cycleTab(-1)) },
-      { key: 's', ctrl: true, handler: wrap(() => saveActiveNote()) },
-      { key: ',', ctrl: true, handler: wrap(() => toggleSettings()) },
-      { key: 'd', ctrl: true, handler: wrap(() => createDrawingQuick()) },
-      { key: 'l', ctrl: true, shift: true, handler: wrap(() => toggleLecture()) },
-      { key: 'f2', handler: wrap(() => renameFocused()) },
-      { key: 'delete', handler: wrap(() => deleteFocused()) },
-      { key: 'escape', handler: () => closeOverlays(), preventDefault: false }
+      {
+        key: "n",
+        ctrl: true,
+        handler: wrap(() => createNoteFromShortcut(false)),
+      },
+      {
+        key: "n",
+        ctrl: true,
+        shift: true,
+        handler: wrap(() => createNoteFromShortcut(true)),
+      },
+      { key: "p", ctrl: true, handler: wrap(() => openCommand()) },
+      {
+        key: "f",
+        ctrl: true,
+        shift: true,
+        handler: () => openSearch("keyword"),
+      },
+      { key: "s", ctrl: true, shift: true, handler: () => openSearch("smart") },
+      { key: "b", ctrl: true, handler: () => toggleLeft() },
+      { key: "/", ctrl: true, handler: () => toggleRight() },
+      {
+        key: "w",
+        ctrl: true,
+        handler: wrap(() => get(activePath) && closeTab(get(activePath) ?? "")),
+      },
+      { key: "tab", ctrl: true, handler: wrap(() => cycleTab(1)) },
+      {
+        key: "tab",
+        ctrl: true,
+        shift: true,
+        handler: wrap(() => cycleTab(-1)),
+      },
+      { key: "s", ctrl: true, handler: wrap(() => saveActiveNote()) },
+      { key: ",", ctrl: true, handler: wrap(() => toggleSettings()) },
+      { key: "d", ctrl: true, handler: wrap(() => createDrawingQuick()) },
+      {
+        key: "l",
+        ctrl: true,
+        shift: true,
+        handler: wrap(() => toggleLecture()),
+      },
+      { key: "f2", handler: wrap(() => renameFocused()) },
+      { key: "delete", handler: wrap(() => deleteFocused()) },
+      { key: "escape", handler: () => closeOverlays(), preventDefault: false },
     ]);
     return () => {
       unregister();
@@ -184,7 +214,9 @@
   });
 
   $: wordCount =
-    $noteBody.trim().length === 0 ? 0 : $noteBody.trim().split(/\s+/).filter(Boolean).length;
+    $noteBody.trim().length === 0
+      ? 0
+      : $noteBody.trim().split(/\s+/).filter(Boolean).length;
 </script>
 
 <div
@@ -197,13 +229,25 @@
       <span>Quillpaw</span>
     </div>
     <div class="window-buttons">
-      <button class="window-btn" on:click={() => handleWindow('min')} aria-label="Minimize">
+      <button
+        class="window-btn"
+        on:click={() => handleWindow("min")}
+        aria-label="Minimize"
+      >
         <Minus size={14} />
       </button>
-      <button class="window-btn" on:click={() => handleWindow('max')} aria-label="Maximize">
+      <button
+        class="window-btn"
+        on:click={() => handleWindow("max")}
+        aria-label="Maximize"
+      >
         <Square size={14} />
       </button>
-      <button class="window-btn danger" on:click={() => handleWindow('close')} aria-label="Close">
+      <button
+        class="window-btn danger"
+        on:click={() => handleWindow("close")}
+        aria-label="Close"
+      >
         <X size={14} />
       </button>
     </div>
@@ -217,7 +261,7 @@
         role="separator"
         aria-orientation="vertical"
         tabindex="-1"
-        on:pointerdown={(event) => startResize('left', event)}
+        on:pointerdown={(event) => startResize("left", event)}
       ></div>
     </aside>
   {/if}
@@ -237,7 +281,7 @@
         role="separator"
         aria-orientation="vertical"
         tabindex="-1"
-        on:pointerdown={(event) => startResize('right', event)}
+        on:pointerdown={(event) => startResize("right", event)}
       ></div>
       <AIPanel />
     </aside>
@@ -247,7 +291,7 @@
     <div class="status-left">
       <span class="pill">Words: {wordCount}</span>
       {#if $activeNote?.tags?.length}
-        <span class="pill">Tags: {$activeNote.tags.join(', ')}</span>
+        <span class="pill">Tags: {$activeNote.tags.join(", ")}</span>
       {/if}
     </div>
     <div class="status-right">Your notes. Your machine. Your den.</div>

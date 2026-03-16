@@ -34,12 +34,14 @@ pub async fn render_png(drawing_json: &str) -> Result<Vec<u8>, String> {
     pixmap.fill(bg);
 
     for stroke_spec in payload.strokes {
-        if stroke_spec.points.len() < 2 { continue; }
-        
+        if stroke_spec.points.len() < 2 {
+            continue;
+        }
+
         let mut pb = PathBuilder::new();
         let p0 = stroke_spec.points[0];
         pb.move_to(p0[0], p0[1]);
-        
+
         for p in stroke_spec.points.iter().skip(1) {
             pb.line_to(p[0], p[1]);
         }
@@ -87,8 +89,12 @@ fn parse_hex_color(hex: &str) -> Result<Color, String> {
 /// Save a drawing JSON file to the vault drawings folder.
 pub async fn save(vault_path: &str, filename: &str, drawing_json: &str) -> Result<String, String> {
     let p = format!("{vault_path}/.assets/drawings/{filename}");
-    fs::create_dir_all(format!("{vault_path}/.assets/drawings")).await.map_err(|e| e.to_string())?;
-    fs::write(&p, drawing_json).await.map_err(|e| e.to_string())?;
+    fs::create_dir_all(format!("{vault_path}/.assets/drawings"))
+        .await
+        .map_err(|e| e.to_string())?;
+    fs::write(&p, drawing_json)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(p)
 }
 
