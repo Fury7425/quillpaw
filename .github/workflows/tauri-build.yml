@@ -12,6 +12,8 @@ env:
   RUSTUP_MAX_RETRIES: 10
   RUST_BACKTRACE: short
   RUSTFLAGS: -C target-feature=+crt-static
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: sccache
 
 jobs:
   build:
@@ -29,10 +31,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup sccache
+        uses: mozilla/sccache-action@v0.0.7
+        with:
+          version: "v0.8.1"
+
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "./src-tauri -> target"
+          cache-on-failure: true   # ← save cache even when build fails
 
       - name: Install frontend dependencies
         run: npm install
@@ -40,11 +48,9 @@ jobs:
       - name: Build Tauri app
         shell: bash
         run: npm run tauri -- build 2>&1 | tee build.log
-        continue-on-error: true
 
       - name: Upload bundles
         uses: actions/upload-artifact@v4
         with:
           name: quillpaw-windows
-          path: |
-            src-tauri/target/release/bundle/**
+          path: src-tauri/target/release/bundle/**
