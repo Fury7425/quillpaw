@@ -1,4 +1,5 @@
 #include "lib.hpp"
+#include <cstdint>
 #include "usearch/rust/lib.rs.h"
 
 using namespace unum::usearch;

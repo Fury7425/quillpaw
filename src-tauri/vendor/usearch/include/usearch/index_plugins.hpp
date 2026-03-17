@@ -5,6 +5,7 @@
 
 #include <atomic>  // `std::atomic`
 #include <chrono>  // `std::chrono`
+#include <cstdint> // `<cstdint>`
 #include <cstring> // `std::strncmp`
 #include <thread>  // `std::thread`
 

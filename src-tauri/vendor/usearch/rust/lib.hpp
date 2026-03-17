@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include "rust/cxx.h"
 
 // We don't have to forward declare all of those:
