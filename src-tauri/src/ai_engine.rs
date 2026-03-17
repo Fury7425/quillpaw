@@ -115,7 +115,7 @@ pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
 
             let piece_bytes = loaded
                 .model
-                .token_to_piece_bytes(token, false)
+                .token_to_bytes(token, llama_cpp_2::model::Special::Tokenize)
                 .map_err(|e| e.to_string())?;
             if let Ok(piece_str) = String::from_utf8(piece_bytes) {
                 output.push_str(&piece_str);
@@ -377,7 +377,7 @@ fn detect_npu_blocking() -> Result<bool, String> {
     }
 
     let com_lib = COMLibrary::new().map_err(|e| e.to_string())?;
-    let wmi_con = WMIConnection::new(com_lib.into()).map_err(|e| e.to_string())?;
+    let wmi_con = WMIConnection::new(com_lib).map_err(|e| e.to_string())?;
     let query =
         "SELECT Name FROM Win32_PnPEntity WHERE Name LIKE '%NPU%' OR Name LIKE '%AI Boost%'";
     let results: Vec<PnpEntity> = wmi_con.raw_query(query).map_err(|e| e.to_string())?;
