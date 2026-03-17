@@ -11,6 +11,7 @@ env:
   CARGO_NET_RETRY: 10
   RUSTUP_MAX_RETRIES: 10
   RUST_BACKTRACE: short
+  RUSTFLAGS: -C target-feature=+crt-static
 
 jobs:
   build:
