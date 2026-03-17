@@ -35,12 +35,21 @@ jobs:
         uses: mozilla/sccache-action@v0.0.7
         with:
           version: "v0.8.1"
+        continue-on-error: true
+
+      - name: Verify sccache or disable it
+        shell: bash
+        run: |
+          if ! sccache --start-server 2>/dev/null; then
+            echo "sccache unavailable, disabling RUSTC_WRAPPER"
+            echo "RUSTC_WRAPPER=" >> $GITHUB_ENV
+          fi
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "./src-tauri -> target"
-          cache-on-failure: true   # ← save cache even when build fails
+          cache-on-failure: true
 
       - name: Install frontend dependencies
         run: npm install
