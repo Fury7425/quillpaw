@@ -21,10 +21,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 tantivy = "0.22"
-# Pinned to =2.16.0: versions after 2.16.x use the `#warning` preprocessor
+# Pinned to =2.9.0: versions 2.16.x and after use the `#warning` preprocessor
 # directive in index_plugins.hpp, which MSVC's cl.exe does not support,
 # causing a fatal C1021 compile error on Windows.
-usearch = { version = "=2.16.0", default-features = false }
+usearch = { version = "=2.9.0", default-features = false }
 notify = "6"
 walkdir = "2"
 gray_matter = "0.2"
