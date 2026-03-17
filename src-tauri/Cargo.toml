@@ -32,8 +32,8 @@ chrono = { version = "0.4", features = ["serde"] }
 anyhow = "1"
 trash = "3"
 uuid = { version = "1", features = ["v4"] }
-llama-cpp-2 = "0.1"
-whisper-rs = "0.11"
+llama-cpp-2 = "0.1.139"
+whisper-rs = "0.16"
 ort = { version = "2.0.0-rc.12", features = ["download-binaries"] }
 cpal = "0.15"
 rubato = "0.14"
