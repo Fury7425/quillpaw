@@ -4,7 +4,6 @@ fn main() {
     build
         .file("rust/lib.cpp")
         .flag_if_supported("-Wno-unknown-pragmas")
-        .warnings(false)
         .include("include")
         .include("rust")
         .include("fp16/include")
@@ -89,33 +88,10 @@ fn main() {
             .define("_ALLOW_POINTER_TO_CONST_MISMATCH", None);
     }
 
-    let base_build = build.clone();
-
-    let mut pop_flag = None;
-    loop {
-        let mut sub_build = base_build.clone();
-        for flag in &flags_to_try {
-            sub_build.define(flag, "1");
-        }
-        let result = sub_build.try_compile("usearch");
-        if result.is_err() {
-            if let Some(flag) = pop_flag {
-                println!(
-                    "cargo:warning=Failed to compile after disabling {:?}, trying next configuration...",
-                    flag
-                );
-            } else if !flags_to_try.is_empty() {
-                print!("cargo:warning=Failed to compile with all SIMD backends...");
-            }
-
-            pop_flag = flags_to_try.pop();
-            if pop_flag.is_none() {
-                result.unwrap();
-            }
-        } else {
-            break;
-        }
+    for flag in &flags_to_try {
+        build.define(flag, "1");
     }
+    build.compile("usearch");
 
     println!("cargo:rerun-if-changed=rust/lib.rs");
     println!("cargo:rerun-if-changed=rust/lib.cpp");
