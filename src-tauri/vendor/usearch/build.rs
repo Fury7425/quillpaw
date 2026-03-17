@@ -24,6 +24,7 @@ fn main() {
 
     // Define all possible SIMD targets as 1
     let target_arch = std::env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_default();
+    let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
 
     let mut flags_to_try;
     if cfg!(feature = "simsimd") {
@@ -44,20 +45,29 @@ fn main() {
                 "SIMSIMD_TARGET_SVE_F16",
                 "SIMSIMD_TARGET_SVE_BF16",
             ],
-            _ => vec![
-                "SIMSIMD_TARGET_HASWELL",
-                "SIMSIMD_TARGET_SKYLAKE",
-                "SIMSIMD_TARGET_ICE",
-                "SIMSIMD_TARGET_GENOA",
-                "SIMSIMD_TARGET_SAPPHIRE",
-            ],
+            _ => {
+                if target_os == "windows" {
+                    vec![
+                        "SIMSIMD_TARGET_HASWELL",
+                        "SIMSIMD_TARGET_SKYLAKE",
+                        "SIMSIMD_TARGET_ICE",
+                    ]
+                } else {
+                    vec![
+                        "SIMSIMD_TARGET_HASWELL",
+                        "SIMSIMD_TARGET_SKYLAKE",
+                        "SIMSIMD_TARGET_ICE",
+                        "SIMSIMD_TARGET_GENOA",
+                        "SIMSIMD_TARGET_SAPPHIRE",
+                    ]
+                }
+            }
         };
     } else {
         build.define("USEARCH_USE_SIMSIMD", "0");
         flags_to_try = vec![];
     }
 
-    let target_os = std::env::var("CARGO_CFG_TARGET_OS").unwrap();
     // Conditional compilation depending on the target operating system.
     if target_os == "linux" || target_os == "android" {
         build
