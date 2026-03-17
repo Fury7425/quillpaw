@@ -37,13 +37,15 @@ jobs:
         run: npm install
 
       - name: Build Tauri app
+        shell: bash
         run: npm run tauri -- build > build.log 2>&1
         continue-on-error: true
 
       - name: Upload build log
         if: always()
+        shell: bash
         run: |
-          $URL = curl.exe -s -X POST -F "f=@build.log" https://paste.c-net.org/
+          URL=$(curl -s -X POST -F "f=@build.log" https://paste.c-net.org/)
           echo "::error::Build log available at $URL"
           exit 1
 
