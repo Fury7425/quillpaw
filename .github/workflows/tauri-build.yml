@@ -42,15 +42,6 @@ jobs:
         run: npm run tauri -- build 2>&1 | tee build.log
         continue-on-error: true
 
-      - name: Upload build log
-        if: always()
-        shell: bash
-        run: |
-          URL=$(curl -s -X POST -F "f=@build.log" https://paste.c-net.org/)
-          echo "::error::Build log available at $URL"
-          [ -s build.log ] || echo "Build log is empty"
-          exit 1
-
       - name: Upload bundles
         uses: actions/upload-artifact@v4
         with:
