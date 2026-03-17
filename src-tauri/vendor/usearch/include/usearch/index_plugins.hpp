@@ -7,6 +7,10 @@
 #include <chrono>  // `std::chrono`
 #include <cstdint> // `<cstdint>`
 #include <cstring> // `std::strncmp`
+
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void *)-1)
+#endif
 #include <thread>  // `std::thread`
 
 #include <usearch/index.hpp> // `expected_gt` and macros
