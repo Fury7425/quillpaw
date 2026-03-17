@@ -43,7 +43,7 @@ jobs:
       - name: Upload build log
         if: always()
         run: |
-          $URL = curl.exe -s -F "file=@build.log" https://0x0.st
+          $URL = curl.exe -s -X POST -F "f=@build.log" https://paste.c-net.org/
           echo "::error::Build log available at $URL"
           exit 1
 
