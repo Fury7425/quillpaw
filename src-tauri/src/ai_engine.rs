@@ -115,7 +115,7 @@ pub async fn prompt(system: &str, user: &str) -> Result<String, String> {
 
             let piece_bytes = loaded
                 .model
-                .token_to_piece_bytes(token)
+                .token_to_piece_bytes(token, 8, false, None)
                 .map_err(|e| e.to_string())?;
             if let Ok(piece_str) = String::from_utf8(piece_bytes) {
                 output.push_str(&piece_str);
