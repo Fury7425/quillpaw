@@ -80,7 +80,7 @@ impl ModelManager {
 
     async fn embed(&mut self, text: &str) -> Result<Vec<f32>, String> {
         let tokenizer = self.tokenizer.as_ref().ok_or("Tokenizer not loaded")?;
-        let session = self.session.as_ref().ok_or("Session not loaded")?;
+        let session = self.session.as_mut().ok_or("Session not loaded")?;
 
         let encoding = tokenizer.encode(text, true).map_err(|e| e.to_string())?;
         let input_ids: Vec<i64> = encoding.get_ids().iter().map(|&id| id as i64).collect();
