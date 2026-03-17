@@ -4,7 +4,6 @@ use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::time::UNIX_EPOCH;
 
-use ndarray::Array2;
 use ort::{
     inputs,
     session::{builder::GraphOptimizationLevel, Session},
@@ -99,19 +98,12 @@ impl ModelManager {
         let batch_size = 1;
         let seq_len = input_ids.len();
 
-        let input_ids_array =
-            Array2::from_shape_vec((batch_size, seq_len), input_ids).map_err(|e| e.to_string())?;
-        let attention_mask_array = Array2::from_shape_vec((batch_size, seq_len), attention_mask)
-            .map_err(|e| e.to_string())?;
-        let token_type_ids_array = Array2::from_shape_vec((batch_size, seq_len), token_type_ids)
-            .map_err(|e| e.to_string())?;
-
         let input_ids_value =
-            ort::value::Value::from_array(input_ids_array).map_err(|e| e.to_string())?;
+            ort::value::Value::from_array(([batch_size, seq_len], input_ids)).map_err(|e| e.to_string())?;
         let attention_mask_value =
-            ort::value::Value::from_array(attention_mask_array).map_err(|e| e.to_string())?;
+            ort::value::Value::from_array(([batch_size, seq_len], attention_mask)).map_err(|e| e.to_string())?;
         let token_type_ids_value =
-            ort::value::Value::from_array(token_type_ids_array).map_err(|e| e.to_string())?;
+            ort::value::Value::from_array(([batch_size, seq_len], token_type_ids)).map_err(|e| e.to_string())?;
 
         let outputs = session
             .run(
@@ -120,12 +112,11 @@ impl ModelManager {
                     "attention_mask" => attention_mask_value,
                     "token_type_ids" => token_type_ids_value,
                 ]
-                .map_err(|e| e.to_string())?,
             )
             .map_err(|e| e.to_string())?;
 
         let (_shape, raw_data) = outputs["last_hidden_state"]
-            .try_extract_raw_tensor::<f32>()
+            .try_extract_tensor::<f32>()
             .map_err(|e| e.to_string())?;
 
         // Mean pooling over raw flat data: shape is [1, seq_len, EMBEDDING_DIM]

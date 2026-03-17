@@ -55,7 +55,7 @@ pub async fn keyword_search(vault_path: &str, query: &str) -> Result<Vec<SearchR
         let index = open_or_create_index(&vault)?;
         let reader = index.reader().map_err(|e| e.to_string())?;
         let searcher = reader.searcher();
-        let (schema, fields) = schema_fields();
+        let (_schema, fields) = schema_fields();
         let parser = tantivy::query::QueryParser::for_index(
             &index,
             vec![fields.title, fields.body, fields.tags],

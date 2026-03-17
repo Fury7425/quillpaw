@@ -215,8 +215,8 @@ async fn run_pipeline(
     mut stop_rx: oneshot::Receiver<()>,
 ) {
     let mut buffer: VecDeque<f32> = VecDeque::new();
-    let mut last_speech = tokio::time::Instant::now();
-    let mut context = match WhisperContext::new_with_params(
+    let _last_speech = tokio::time::Instant::now();
+    let context = match WhisperContext::new_with_params(
         &model_path,
         whisper_rs::WhisperContextParameters::default(),
     ) {
