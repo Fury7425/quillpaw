@@ -262,11 +262,8 @@ async fn run_pipeline(
             params.set_n_threads(4);
             state.full(params, &resampled)?;
             let mut text = String::new();
-            let n_segments = state.full_n_segments().unwrap_or(0);
-            for i in 0..n_segments {
-                if let Ok(segment_text) = state.full_get_segment_text(i) {
-                    text.push_str(&segment_text);
-                }
+            for segment in state.as_iter() {
+                text.push_str(&segment.to_string());
             }
             Ok::<_, whisper_rs::WhisperError>(text)
         }) {
