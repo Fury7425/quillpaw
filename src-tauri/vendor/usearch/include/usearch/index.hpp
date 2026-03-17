@@ -93,6 +93,7 @@
 #include <bitset>    // `std::bitset`
 #include <climits>   // `CHAR_BIT`
 #include <cmath>     // `std::sqrt`
+#include <cstdint>   // `std::uint32_t`, etc.
 #include <cstring>   // `std::memset`
 #include <iterator>  // `std::reverse_iterator`
 #include <mutex>     // `std::unique_lock` - replacement candidate
