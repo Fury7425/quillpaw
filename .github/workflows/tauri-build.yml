@@ -18,9 +18,10 @@ jobs:
     name: Build (Windows)
     runs-on: windows-2022
     env:
-      RUSTFLAGS: "-C link-arg=/FORCE:MULTIPLE"
-      CFLAGS: "/MD"
-      CXXFLAGS: "/MD"
+      RUSTFLAGS: "-C target-feature=+crt-static -C link-arg=/FORCE:MULTIPLE"
+      CFLAGS: "/MT"
+      CXXFLAGS: "/MT"
+      MSVC_RUNTIME_LIBRARY: "MultiThreaded"
     steps:
       - uses: actions/checkout@v4
 
