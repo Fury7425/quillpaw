@@ -16,7 +16,7 @@ env:
 jobs:
   build:
     name: Build (Windows)
-    runs-on: windows-2022
+    runs-on: windows-latest
     env:
       RUSTFLAGS: "-C target-feature=+crt-static -C link-arg=/FORCE:MULTIPLE"
       CFLAGS: "/MT"
@@ -79,10 +79,16 @@ jobs:
         shell: bash
 
       - name: Build Tauri app
-        shell: bash
-        run: |
-          set -o pipefail
-          npm run tauri -- build 2>&1 | tee build.log
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: "Quillpaw v__VERSION__"
+          releaseBody: "Automated release by GitHub Actions"
+          releaseDraft: true
+          prerelease: false
+          args: --verbose
 
       - name: Upload build log on failure
         if: failure()
