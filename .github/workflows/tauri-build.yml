@@ -11,14 +11,12 @@ env:
   CARGO_NET_RETRY: 10
   RUSTUP_MAX_RETRIES: 10
   RUST_BACKTRACE: short
-  RUSTFLAGS: -C target-feature=+crt-static
   SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: sccache
 
 jobs:
   build:
     name: Build (Windows)
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +30,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Setup sccache
-        uses: mozilla/sccache-action@v0.0.7
+        uses: mozilla-actions/sccache-action@v0.0.8
         with:
           version: "v0.8.1"
         continue-on-error: true
@@ -40,9 +38,10 @@ jobs:
       - name: Verify sccache or disable it
         shell: bash
         run: |
-          if ! sccache --start-server 2>/dev/null; then
+          if sccache --start-server 2>/dev/null; then
+            echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+          else
             echo "sccache unavailable, disabling RUSTC_WRAPPER"
-            echo "RUSTC_WRAPPER=" >> $GITHUB_ENV
           fi
 
       - name: Rust cache
@@ -50,6 +49,11 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
           cache-on-failure: true
+
+      - name: Enable VBScript (Required for WiX v3)
+        run: DISM /online /enable-feature /featurename:VBScript /all /norestart
+        shell: powershell
+        continue-on-error: true
 
       - name: Install frontend dependencies
         run: npm install
