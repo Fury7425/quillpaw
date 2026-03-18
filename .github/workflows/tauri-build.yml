@@ -22,6 +22,7 @@ jobs:
       CFLAGS: "/MT"
       CXXFLAGS: "/MT"
       MSVC_RUNTIME_LIBRARY: "MultiThreaded"
+      CMAKE_ARGS: "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded"
     steps:
       - uses: actions/checkout@v4
 
