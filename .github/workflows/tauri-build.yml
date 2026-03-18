@@ -17,6 +17,8 @@ jobs:
   build:
     name: Build (Windows)
     runs-on: windows-2022
+    env:
+      RUSTFLAGS: "-C link-arg=/FORCE:MULTIPLE"
     steps:
       - uses: actions/checkout@v4
 

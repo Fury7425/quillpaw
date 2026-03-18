@@ -451,7 +451,7 @@
       });
     } else {
       view.dispatch({
-        changes: { from: selection.from, to: selection.to, insert: before + view.state.sliceString(selection.from, selection.to) + after },
+        changes: { from: selection.from, to: selection.to, insert: before + view.state.doc.sliceString(selection.from, selection.to) + after },
         selection: { anchor: selection.from + before.length, head: selection.to + before.length },
       });
     }
