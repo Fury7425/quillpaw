@@ -12,6 +12,7 @@ struct Frontmatter {
     created: Option<String>,
     modified: Option<String>,
     tags: Vec<String>,
+    aliases: Vec<String>,
 }
 
 /// Ensure the vault directory has required Quillpaw subfolders.
@@ -59,6 +60,7 @@ pub async fn read_note_file(path: &str) -> Result<NoteContent, String> {
         title,
         body,
         tags: meta.tags,
+        aliases: meta.aliases,
         created: meta.created.unwrap_or_else(|| now.clone()),
         modified: meta.modified.unwrap_or(now),
     })
@@ -135,6 +137,7 @@ pub async fn create_note_file(
         created: Some(now.clone()),
         modified: Some(now),
         tags: vec![],
+        aliases: vec![],
     };
     let content = format!("{}\n\n", build_frontmatter(&meta));
     save_atomic(note_path.to_string_lossy().as_ref(), &content).await?;
@@ -309,6 +312,7 @@ fn parse_frontmatter(content: &str) -> (Frontmatter, String) {
                 "created" => meta.created = Some(value),
                 "modified" => meta.modified = Some(value),
                 "tags" => meta.tags = parse_list_value(&value),
+                "aliases" => meta.aliases = parse_list_value(&value),
                 _ => {}
             }
         }
@@ -341,12 +345,27 @@ fn build_frontmatter(meta: &Frontmatter) -> String {
     } else {
         format!("tags: [{tags}]")
     };
+    let aliases = if meta.aliases.is_empty() {
+        String::new()
+    } else {
+        meta.aliases
+            .iter()
+            .map(|alias| format_tag(alias))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let alias_line = if aliases.is_empty() {
+        "aliases: []".to_string()
+    } else {
+        format!("aliases: [{aliases}]")
+    };
     format!(
         "{FRONTMATTER_DELIM}\n\
 title: \"{title}\"\n\
 created: {created}\n\
 modified: {modified}\n\
 {tag_line}\n\
+{alias_line}\n\
 {FRONTMATTER_DELIM}"
     )
 }

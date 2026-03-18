@@ -1,5 +1,6 @@
 <script lang="ts">
   import TreeNode from "$lib/components/TreeNode.svelte";
+  import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
   import type { FileNode } from "$lib/types";
   import {
     fileTree,
@@ -12,6 +13,7 @@
     focusedPath,
     focusedIsFolder,
     toVaultRelative,
+    renameRequest,
   } from "$lib/stores/vault";
   import { openNote } from "$lib/stores/editor";
 
@@ -20,6 +22,16 @@
   let contextX = 0;
   let contextY = 0;
   let contextNode: FileNode | null = null;
+  let deleteDialogOpen = false;
+  let deleteMessage = "";
+  let editingPath: string | null = null;
+
+  renameRequest.subscribe((path) => {
+    if (path) {
+      editingPath = path;
+      renameRequest.set(null);
+    }
+  });
 
   const toggleFolder = (path: string) => {
     const next = new Set(expanded);
@@ -84,20 +96,35 @@
     closeContext();
   };
 
-  const handleRename = async () => {
+  const handleRename = () => {
     if (!contextNode) return closeContext();
-    const name = window.prompt("New name", contextNode.name);
-    if (!name) return closeContext();
-    await renameItem(contextNode.path, name);
+    editingPath = contextNode.path;
     closeContext();
   };
 
-  const handleDelete = async () => {
+  const handleRenameCommit = async (newName: string) => {
+    if (editingPath && newName && newName !== contextNode?.name) {
+      await renameItem(editingPath, newName);
+    }
+    editingPath = null;
+  };
+
+  const handleDelete = () => {
     if (!contextNode) return closeContext();
-    const confirmed = window.confirm(`Delete ${contextNode.name}?`);
-    if (!confirmed) return closeContext();
-    await deleteItem(contextNode.path);
+    deleteMessage = `Delete ${contextNode.name}?`;
+    deleteDialogOpen = true;
     closeContext();
+  };
+
+  const onConfirmDelete = async () => {
+    if (contextNode) {
+      await deleteItem(contextNode.path);
+    }
+    deleteDialogOpen = false;
+  };
+
+  const onCancelDelete = () => {
+    deleteDialogOpen = false;
   };
 </script>
 
@@ -118,10 +145,24 @@
   </div>
   <div class="tree">
     {#each $fileTree as node (node.path)}
-      <TreeNode {node} {expanded} {toggleFolder} onContext={onContextMenu} />
+      <TreeNode
+        {node}
+        {expanded}
+        {toggleFolder}
+        onContext={onContextMenu}
+        {editingPath}
+        onRenameCommit={handleRenameCommit}
+      />
     {/each}
   </div>
 </div>
+
+<ConfirmDialog
+  open={deleteDialogOpen}
+  message={deleteMessage}
+  onConfirm={onConfirmDelete}
+  onCancel={onCancelDelete}
+/>
 
 {#if contextOpen}
   <div class="context" style={`top:${contextY}px; left:${contextX}px;`}>

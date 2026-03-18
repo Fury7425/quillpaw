@@ -442,6 +442,67 @@
     ".cm-cursor": { borderLeft: "2px solid var(--accent)" },
   });
 
+  const wrapSelection = (view: EditorView, before: string, after: string) => {
+    const selection = view.state.selection.main;
+    if (selection.empty) {
+      view.dispatch({
+        changes: { from: selection.from, insert: before + after },
+        selection: { anchor: selection.from + before.length },
+      });
+    } else {
+      view.dispatch({
+        changes: { from: selection.from, to: selection.to, insert: before + view.state.sliceString(selection.from, selection.to) + after },
+        selection: { anchor: selection.from + before.length, head: selection.to + before.length },
+      });
+    }
+    return true;
+  };
+
+  const handleListIndent = (view: EditorView, direction: 1 | -1) => {
+    const selection = view.state.selection.main;
+    const line = view.state.doc.lineAt(selection.head);
+    const listRegex = /^(\s*)([-*]|\d+\.)\s/;
+    if (listRegex.test(line.text)) {
+      if (direction === 1) {
+        view.dispatch({
+          changes: { from: line.from, insert: "  " },
+          selection: { anchor: selection.from + 2, head: selection.to + 2 },
+        });
+      } else {
+        const indent = line.text.match(/^\s*/)?.[0] || "";
+        if (indent.length >= 2) {
+          view.dispatch({
+            changes: { from: line.from, to: line.from + 2 },
+            selection: { anchor: selection.from - 2, head: selection.to - 2 },
+          });
+        }
+      }
+      return true;
+    }
+    return false;
+  };
+
+  const formattingKeymap = [
+    { key: "Mod-b", run: (view: EditorView) => wrapSelection(view, "**", "**") },
+    { key: "Mod-i", run: (view: EditorView) => wrapSelection(view, "*", "*") },
+    { key: "Mod-k", run: (view: EditorView) => wrapSelection(view, "[[", "]]") },
+    { key: "Mod-`", run: (view: EditorView) => wrapSelection(view, "`", "`") },
+    {
+      key: "Mod-Shift-c",
+      run: (view: EditorView) => {
+        const selection = view.state.selection.main;
+        const text = "```\n\n```";
+        view.dispatch({
+          changes: { from: selection.from, to: selection.to, insert: text },
+          selection: { anchor: selection.from + 4 },
+        });
+        return true;
+      },
+    },
+    { key: "Tab", run: (view: EditorView) => handleListIndent(view, 1) },
+    { key: "Shift-Tab", run: (view: EditorView) => handleListIndent(view, -1) },
+  ];
+
   const buildState = (doc: string) =>
     EditorState.create({
       doc,
@@ -450,7 +511,7 @@
         highlightActiveLineGutter(),
         highlightActiveLine(),
         drawSelection(),
-        keymap.of(defaultKeymap),
+        keymap.of([...formattingKeymap, ...defaultKeymap]),
         markdown({ codeLanguages: languages }),
         wikiLinkPlugin,
         mathPlugin,

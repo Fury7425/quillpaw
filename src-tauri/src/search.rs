@@ -29,7 +29,9 @@ pub async fn build_index(vault_path: &str) -> Result<(), String> {
             let title = meta
                 .title
                 .unwrap_or_else(|| title_from_path(path).to_string());
-            let tags = meta.tags.join(" ");
+            let mut all_tags = meta.tags;
+            all_tags.extend(meta.aliases);
+            let tags = all_tags.join(" ");
             writer
                 .add_document(doc!(
                     fields.path => path.to_string_lossy().to_string(),
@@ -112,6 +114,7 @@ struct SearchFields {
 struct Frontmatter {
     title: Option<String>,
     tags: Vec<String>,
+    aliases: Vec<String>,
 }
 
 fn schema_fields() -> (Schema, SearchFields) {
@@ -174,6 +177,7 @@ fn parse_frontmatter(content: &str) -> (Frontmatter, String) {
             match key.trim() {
                 "title" => meta.title = Some(value),
                 "tags" => meta.tags = parse_list_value(&value),
+                "aliases" => meta.aliases = parse_list_value(&value),
                 _ => {}
             }
         }

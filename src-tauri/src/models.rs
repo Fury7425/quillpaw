@@ -14,6 +14,7 @@ pub struct NoteContent {
     pub title: String,
     pub body: String,
     pub tags: Vec<String>,
+    pub aliases: Vec<String>,
     pub created: String,
     pub modified: String,
 }

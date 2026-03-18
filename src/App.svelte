@@ -13,9 +13,11 @@
   import CommandPalette from "$lib/components/CommandPalette.svelte";
   import LectureMode from "$lib/components/LectureMode.svelte";
   import DrawingCanvas from "$lib/components/DrawingCanvas.svelte";
+  import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
 
   import {
     openVault,
+    createVault,
     vaultPath,
     focusedPath,
     focusedIsFolder,
@@ -23,6 +25,7 @@
     createNote,
     renameItem,
     deleteItem,
+    renameRequest,
   } from "$lib/stores/vault";
   import {
     activeNote,
@@ -52,6 +55,9 @@
   let appWindow = getCurrentWindow();
   let leftWidth = 280;
   let rightWidth = 320;
+  let deleteDialogOpen = false;
+  let deleteMessage = "";
+  let userClosedRight = false;
 
   const handleWindow = (action: "min" | "max" | "close") => {
     if (action === "min") appWindow.minimize();
@@ -118,12 +124,10 @@
     if (path) openNote(path);
   };
 
-  const renameFocused = async () => {
+  const renameFocused = () => {
     const path = get(focusedPath);
     if (!path) return;
-    const name = window.prompt("New name");
-    if (!name) return;
-    await renameItem(path, name);
+    renameRequest.set(path);
   };
 
   const createDrawingQuick = async () => {
@@ -147,12 +151,23 @@
     openDrawing(filename);
   };
 
-  const deleteFocused = async () => {
+  const deleteFocused = () => {
     const path = get(focusedPath);
     if (!path) return;
-    const confirmed = window.confirm("Delete selected item?");
-    if (!confirmed) return;
-    await deleteItem(path);
+    deleteMessage = "Delete selected item?";
+    deleteDialogOpen = true;
+  };
+
+  const onConfirmDelete = async () => {
+    const path = get(focusedPath);
+    if (path) {
+      await deleteItem(path);
+    }
+    deleteDialogOpen = false;
+  };
+
+  const onCancelDelete = () => {
+    deleteDialogOpen = false;
   };
 
   onMount(() => {
@@ -182,7 +197,15 @@
       },
       { key: "s", ctrl: true, shift: true, handler: () => openSearch("smart") },
       { key: "b", ctrl: true, handler: () => toggleLeft() },
-      { key: "/", ctrl: true, handler: () => toggleRight() },
+      {
+        key: "/",
+        ctrl: true,
+        handler: () => {
+          const isOpen = get(uiState).rightOpen;
+          toggleRight();
+          userClosedRight = isOpen;
+        },
+      },
       {
         key: "w",
         ctrl: true,
@@ -208,8 +231,24 @@
       { key: "delete", handler: wrap(() => deleteFocused()) },
       { key: "escape", handler: () => closeOverlays(), preventDefault: false },
     ]);
+
+    const handleResize = () => {
+      if (window.innerWidth < 1000) {
+        if (get(uiState).rightOpen) {
+          uiState.update((s) => ({ ...s, rightOpen: false }));
+        }
+      } else {
+        if (!userClosedRight && !get(uiState).rightOpen) {
+          uiState.update((s) => ({ ...s, rightOpen: true }));
+        }
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
     return () => {
       unregister();
+      window.removeEventListener("resize", handleResize);
     };
   });
 
@@ -302,6 +341,13 @@
   <CommandPalette open={$uiState.commandOpen} />
   <DrawingCanvas />
 
+  <ConfirmDialog
+    open={deleteDialogOpen}
+    message={deleteMessage}
+    onConfirm={onConfirmDelete}
+    onCancel={onCancelDelete}
+  />
+
   {#if !$vaultPath}
     <div class="onboarding">
       <div class="card">
@@ -309,8 +355,8 @@
         <h2>Quillpaw</h2>
         <p>Your notes. Your machine. Your den.</p>
         <div class="actions">
-          <button class="primary" on:click={openVault}>Open Vault</button>
-          <button on:click={openVault}>Create Vault</button>
+          <button class="ghost" on:click={openVault}>Open Existing Vault</button>
+          <button class="primary" on:click={createVault}>Create New Vault</button>
         </div>
       </div>
     </div>
@@ -383,6 +429,12 @@
     width: 4px;
     background: transparent;
     cursor: col-resize;
+    user-select: none;
+    transition: background var(--transition);
+    z-index: 10;
+  }
+  .resizer:hover {
+    background: var(--accent-subtle);
   }
   .left .resizer {
     right: 0;
@@ -457,6 +509,16 @@
     background: var(--accent);
     border-color: var(--accent);
     color: var(--bg-base);
+  }
+  .actions .ghost {
+    background: transparent;
+    border-color: var(--border-subtle);
+    color: var(--text-secondary);
+  }
+  .actions .ghost:hover {
+    background: var(--bg-surface);
+    border-color: var(--border);
+    color: var(--text-primary);
   }
   .toast-host {
     position: fixed;

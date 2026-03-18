@@ -10,6 +10,7 @@ export const vaultPath = writable<string>("");
 export const fileTree = writable<FileNode[]>([]);
 export const focusedPath = writable<string | null>(null);
 export const focusedIsFolder = writable<boolean>(false);
+export const renameRequest = writable<string | null>(null);
 
 let unlistenVault: (() => void) | null = null;
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
@@ -25,6 +26,29 @@ export async function openVault(): Promise<void> {
     await store.set("vaultPath", path);
     await store.save();
     await startWatcher();
+  } catch (err) {
+    pushToast(err instanceof Error ? err.message : String(err));
+  }
+}
+
+export async function createVault(): Promise<void> {
+  try {
+    const path = await tauriInvoke<string>("open_vault");
+    vaultPath.set(path);
+    // Create sample Welcome.md note
+    await tauriInvoke("create_note", {
+      vaultPath: path,
+      folder: "",
+      title: "Welcome",
+    });
+    await refreshTree();
+    await tauriInvoke("build_search_index", { vaultPath: path });
+    tauriInvoke("build_embeddings", { vaultPath: path }).catch(() => null);
+    const store = await load(`${path}/.quillpaw/config.json`);
+    await store.set("vaultPath", path);
+    await store.save();
+    await startWatcher();
+    pushToast("Vault created! Start writing.");
   } catch (err) {
     pushToast(err instanceof Error ? err.message : String(err));
   }
