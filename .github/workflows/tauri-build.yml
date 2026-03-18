@@ -19,6 +19,8 @@ jobs:
     runs-on: windows-2022
     env:
       RUSTFLAGS: "-C link-arg=/FORCE:MULTIPLE"
+      CFLAGS: "/MD"
+      CXXFLAGS: "/MD"
     steps:
       - uses: actions/checkout@v4
 
