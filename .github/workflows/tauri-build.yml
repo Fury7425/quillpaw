@@ -10,8 +10,6 @@ on:
 env:
   CARGO_NET_RETRY: 10
   RUSTUP_MAX_RETRIES: 10
-  RUST_BACKTRACE: short
-  SCCACHE_GHA_ENABLED: "true"
 
 jobs:
   build:
@@ -30,72 +28,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: npm
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.8
-        with:
-          version: "v0.8.1"
-        continue-on-error: true
-
-      - name: Verify sccache or disable it
-        shell: bash
-        run: |
-          if sccache --start-server 2>/dev/null; then
-            echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
-          else
-            echo "sccache unavailable, disabling RUSTC_WRAPPER"
-          fi
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: "./src-tauri -> target"
-          cache-on-failure: true
-
-      - name: Enable VBScript (Required for WiX v3)
-        run: DISM /online /enable-feature /featurename:VBScript /all /norestart
-        shell: powershell
-        continue-on-error: true
-
-      - name: Install frontend dependencies
+      - name: Install dependencies
         run: npm install
-
-      - name: Check frontend
-        run: npm run check
-
-      - name: Install WiX v4
-        run: dotnet tool install --global wix
-        shell: bash
-
-      - name: Install WiX extensions
-        run: |
-          wix extension add -g WixToolset.Ui.wixext
-          wix extension add -g WixToolset.Util.wixext
-          wix extension add -g WixToolset.Bal.wixext
-        shell: bash
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: "Quillpaw v__VERSION__"
-          releaseBody: "Automated release by GitHub Actions"
-          releaseDraft: true
-          prerelease: false
           args: --verbose
-
-      - name: Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log-windows
-          path: build.log
 
       - name: Upload bundles
         uses: actions/upload-artifact@v4
