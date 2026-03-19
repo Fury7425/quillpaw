@@ -15,12 +15,6 @@ jobs:
   build:
     name: Build (Windows)
     runs-on: windows-latest
-    env:
-      RUSTFLAGS: "-C target-feature=+crt-static -C link-arg=/FORCE:MULTIPLE"
-      CFLAGS: "/MT"
-      CXXFLAGS: "/MT"
-      MSVC_RUNTIME_LIBRARY: "MultiThreaded"
-      CMAKE_ARGS: "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded"
     steps:
       - uses: actions/checkout@v4
 
