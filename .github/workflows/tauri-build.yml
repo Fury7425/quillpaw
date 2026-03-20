@@ -34,18 +34,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUSTFLAGS: "-C target-feature=-crt-static -C link-arg=/FORCE:MULTIPLE"
-          CFLAGS: "/MD"
-          CXXFLAGS: "/MD"
-          MSVC_RUNTIME_LIBRARY: "MultiThreadedDLL"
-          CMAKE_ARGS: "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL"
         with:
-          tagName: v__VERSION__ # the action will replace this with the version from package.json
           args: --verbose
 
       - name: Upload bundles
         uses: actions/upload-artifact@v4
         with:
           name: quillpaw-windows
-          path: |
-            src-tauri/target/release/bundle/nsis/*.exe
-            src-tauri/target/release/quillpaw.exe
+          path: src-tauri/target/release/bundle/nsis/*.exe
