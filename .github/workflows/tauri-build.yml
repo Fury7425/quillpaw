@@ -33,11 +33,11 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RUSTFLAGS: "-C link-arg=/FORCE:MULTIPLE"
-          CFLAGS: ""
-          CXXFLAGS: ""
-          MSVC_RUNTIME_LIBRARY: ""
-          CMAKE_ARGS: ""
+          RUSTFLAGS: "-C target-feature=-crt-static -C link-arg=/FORCE:MULTIPLE"
+          CFLAGS: "/MD"
+          CXXFLAGS: "/MD"
+          MSVC_RUNTIME_LIBRARY: "MultiThreadedDLL"
+          CMAKE_ARGS: "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL"
         with:
           args: --verbose
 
