@@ -33,6 +33,11 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUSTFLAGS: "-C link-arg=/FORCE:MULTIPLE"
+          CFLAGS: ""
+          CXXFLAGS: ""
+          MSVC_RUNTIME_LIBRARY: ""
+          CMAKE_ARGS: ""
         with:
           args: --verbose
 
