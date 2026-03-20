@@ -29,11 +29,23 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Debug Environment
+        run: |
+          echo "RUSTFLAGS: $env:RUSTFLAGS"
+          echo "CFLAGS: $env:CFLAGS"
+          echo "CXXFLAGS: $env:CXXFLAGS"
+          dir env:
+        shell: pwsh
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUSTFLAGS: "-C target-feature=-crt-static -C link-arg=/FORCE:MULTIPLE"
+          CFLAGS: "/MD"
+          CXXFLAGS: "/MD"
+          MSVC_RUNTIME_LIBRARY: "MultiThreadedDLL"
+          CMAKE_MSVC_RUNTIME_LIBRARY: "MultiThreadedDLL"
         with:
           args: --verbose
 
