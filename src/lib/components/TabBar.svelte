@@ -40,7 +40,7 @@
     gap: var(--space-1);
     padding: var(--space-3) var(--space-4) var(--space-2);
     border-bottom: 1px solid var(--border-subtle);
-    background: rgba(11, 17, 29, 0.52);
+    background: var(--glass);
     overflow-x: auto;
   }
   .tab {
@@ -48,7 +48,7 @@
     align-items: center;
     gap: var(--space-2);
     padding: 8px 12px;
-    background: rgba(16, 24, 39, 0.74);
+    background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     border-radius: 14px;
     cursor: pointer;
@@ -62,12 +62,8 @@
     border-color: var(--border);
   }
   .tab.active {
-    border-color: rgba(88, 193, 255, 0.22);
-    background: linear-gradient(
-      135deg,
-      rgba(88, 193, 255, 0.14),
-      rgba(126, 240, 197, 0.08)
-    );
+    border-color: var(--accent-glow);
+    background: linear-gradient(135deg, var(--accent-subtle), var(--accent2-subtle));
   }
   .title {
     max-width: 160px;

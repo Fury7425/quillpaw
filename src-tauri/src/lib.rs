@@ -23,6 +23,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
             open_vault,
+            restore_vault,
             get_file_tree,
             read_note,
             save_note,

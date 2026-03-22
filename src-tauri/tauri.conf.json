@@ -17,8 +17,11 @@
         "height": 800,
         "minWidth": 800,
         "minHeight": 600,
+        "resizable": true,
+        "maximizable": true,
         "decorations": false,
         "transparent": false,
+        "shadow": true,
         "theme": "Dark"
       }
     ],

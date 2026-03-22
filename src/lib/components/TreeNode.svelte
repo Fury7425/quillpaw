@@ -97,12 +97,12 @@
       transform var(--transition);
   }
   .row:hover {
-    background: rgba(15, 24, 39, 0.62);
+    background: var(--bg-surface);
     border-color: var(--border-subtle);
     transform: translateX(2px);
   }
   input {
-    background: rgba(13, 21, 35, 0.92);
+    background: var(--bg-elevated);
     border: 1px solid var(--accent);
     color: var(--text-primary);
     font-family: inherit;
@@ -112,17 +112,13 @@
     border-radius: var(--radius-xs);
   }
   .row.active {
-    border-color: rgba(88, 193, 255, 0.2);
-    background: linear-gradient(
-      135deg,
-      rgba(88, 193, 255, 0.14),
-      rgba(126, 240, 197, 0.08)
-    );
+    border-color: var(--accent-glow);
+    background: linear-gradient(135deg, var(--accent-subtle), var(--accent2-subtle));
   }
   .children {
     margin-left: var(--space-4);
     padding-left: var(--space-2);
-    border-left: 1px solid rgba(125, 154, 204, 0.12);
+    border-left: 1px solid var(--border-subtle);
   }
   .folder-icon {
     color: var(--accent2);

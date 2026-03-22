@@ -18,6 +18,23 @@ pub async fn open_vault(app: AppHandle) -> Result<String, String> {
     Ok(path_string)
 }
 
+/// Re-open a previously selected vault path without showing the folder picker.
+#[tauri::command]
+pub async fn restore_vault(app: AppHandle, vault_path: String) -> Result<String, String> {
+    let path = std::path::Path::new(&vault_path);
+    if !path.exists() {
+        return Err("The saved vault folder no longer exists.".to_string());
+    }
+    if !path.is_dir() {
+        return Err("The saved vault path is not a folder.".to_string());
+    }
+
+    let path_string = path.to_string_lossy().to_string();
+    fs_manager::ensure_vault_structure(&path_string).await?;
+    watcher::start_watcher(app, path_string.clone()).await?;
+    Ok(path_string)
+}
+
 /// Return a recursive file tree for the vault path.
 #[tauri::command]
 pub async fn get_file_tree(vault_path: String) -> Result<Vec<FileNode>, String> {

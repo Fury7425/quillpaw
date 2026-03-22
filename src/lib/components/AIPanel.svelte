@@ -165,7 +165,7 @@
     padding: var(--space-4);
     border-radius: 20px;
     border: 1px solid var(--border-subtle);
-    background: rgba(17, 26, 42, 0.72);
+    background: var(--bg-surface);
     box-shadow: var(--shadow-soft);
   }
   .section h4 {

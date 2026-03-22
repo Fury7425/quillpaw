@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { load, type Store } from "@tauri-apps/plugin-store";
   import { open as openDialog } from "@tauri-apps/plugin-dialog";
   import { listen } from "@tauri-apps/api/event";
   import { get } from "svelte/store";
 
   import { uiState, toggleSettings, pushToast } from "$lib/stores/ui";
   import { vaultPath } from "$lib/stores/vault";
+  import { setSavedTheme } from "$lib/stores/preferences";
   import {
     aiDeviceMode,
     aiEnabled,
@@ -20,7 +20,13 @@
 
   export let open = false;
 
-  let configStore: Store | null = null;
+  type VaultConfigStore = {
+    get<T>(key: string): Promise<T | null>;
+    set(key: string, value: unknown): Promise<void>;
+    save(): Promise<void>;
+  };
+
+  let configStore: VaultConfigStore | null = null;
   let devices: string[] = [];
   let npuAvailable = false;
   let downloadMap: Record<string, ModelDownloadProgress> = {};
@@ -60,6 +66,7 @@
     }
 
     try {
+      const { load } = await import("@tauri-apps/plugin-store");
       const store = await load(`${vault}/.quillpaw/config.json`);
       configStore = store;
 
@@ -67,17 +74,6 @@
       const storedDeviceMode = await store.get<string>("aiDeviceMode");
       const storedSttPath = await store.get<string>("sttModelPath");
       const storedDevice = await store.get<string>("sttDevice");
-      const storedTheme = await store.get<string>("theme");
-
-      if (
-        storedTheme === "Dark Warm" ||
-        storedTheme === "Dark Cool" ||
-        storedTheme === "Light Parchment"
-      ) {
-        applyDocumentTheme(storedTheme);
-      } else {
-        applyDocumentTheme("Dark Warm");
-      }
 
       if (storedAiPath) aiModelPath.set(storedAiPath);
       if (
@@ -193,7 +189,11 @@
     const target = event.target as HTMLSelectElement;
     const theme = target.value as "Dark Warm" | "Dark Cool" | "Light Parchment";
     applyDocumentTheme(theme);
-    await persistConfigValue("theme", theme);
+    try {
+      await setSavedTheme(theme);
+    } catch (err) {
+      reportError(err, "Could not save that theme.");
+    }
   };
 
   const toggleAi = async () => {
@@ -405,8 +405,7 @@
     gap: var(--space-4);
     overflow: auto;
     z-index: 35;
-    background:
-      linear-gradient(180deg, rgba(16, 24, 39, 0.96), rgba(10, 16, 28, 0.98));
+    background: linear-gradient(180deg, var(--bg-panel), var(--glass));
     border-left: 1px solid var(--border);
     backdrop-filter: blur(20px);
     box-shadow: -18px 0 48px rgba(0, 0, 0, 0.28);
@@ -437,7 +436,7 @@
     display: grid;
     gap: var(--space-2);
     padding: var(--space-4);
-    background: rgba(18, 27, 43, 0.76);
+    background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     border-radius: 20px;
     box-shadow: var(--shadow-soft);
@@ -476,7 +475,7 @@
   }
 
   .ghost {
-    background: rgba(14, 22, 36, 0.78);
+    background: var(--bg-elevated);
     border-color: var(--border);
     color: var(--text-primary);
   }
@@ -490,7 +489,7 @@
     height: 8px;
     border-radius: 999px;
     overflow: hidden;
-    background: rgba(12, 18, 30, 0.72);
+    background: var(--glass);
     border: 1px solid var(--border-subtle);
   }
 

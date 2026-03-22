@@ -360,8 +360,11 @@ async fn search_hnsw(
         ..Default::default()
     };
     let index = Index::new(&options).map_err(|e| e.to_string())?;
+    let hnsw_path_str = hnsw_path
+        .to_str()
+        .ok_or_else(|| "Embedding index path contains invalid Unicode.".to_string())?;
     index
-        .load(hnsw_path.to_str().unwrap())
+        .load(hnsw_path_str)
         .map_err(|e| e.to_string())?;
 
     let matches = index
@@ -412,8 +415,11 @@ async fn build_index_async(
     for (id, vector) in &vectors {
         index.add(*id, vector).map_err(|e| e.to_string())?;
     }
+    let hnsw_path_str = hnsw_path
+        .to_str()
+        .ok_or_else(|| "Embedding index path contains invalid Unicode.".to_string())?;
     index
-        .save(hnsw_path.to_str().unwrap())
+        .save(hnsw_path_str)
         .map_err(|e| e.to_string())?;
     Ok(index)
 }

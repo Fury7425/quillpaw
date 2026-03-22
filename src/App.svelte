@@ -18,6 +18,7 @@
   import {
     openVault,
     createVault,
+    restoreVault,
     vaultPath,
     focusedPath,
     focusedIsFolder,
@@ -49,6 +50,7 @@
     openDrawing,
     pushToast,
   } from "$lib/stores/ui";
+  import { getLastVaultPath, getSavedTheme } from "$lib/stores/preferences";
   import { registerShortcuts } from "$lib/utils/shortcuts";
   import { tauriInvoke } from "$lib/utils/tauri_bridge";
 
@@ -86,6 +88,13 @@
     }
   };
 
+  const applyThemePreference = (
+    theme: "Dark Warm" | "Dark Cool" | "Light Parchment",
+  ) => {
+    uiState.update((state) => ({ ...state, theme }));
+    document.documentElement.setAttribute("data-theme", theme);
+  };
+
   const handleWindow = async (action: "min" | "max" | "close") => {
     const currentWindow = appWindow;
     if (!currentWindow) return;
@@ -93,11 +102,25 @@
       if (action === "min") {
         await currentWindow.minimize();
       } else if (action === "max") {
-        await currentWindow.toggleMaximize();
+        const maximized = await currentWindow.isMaximized();
+        if (maximized) {
+          await currentWindow.unmaximize();
+        } else {
+          await currentWindow.maximize();
+        }
       } else {
         await currentWindow.close();
       }
     }, "Window controls are unavailable right now.");
+  };
+
+  const toggleFullscreenWindow = async () => {
+    const currentWindow = appWindow;
+    if (!currentWindow) return;
+    await runUiTask(async () => {
+      const fullscreen = await currentWindow.isFullscreen();
+      await currentWindow.setFullscreen(!fullscreen);
+    }, "Fullscreen is unavailable right now.");
   };
 
   const shouldIgnoreShortcut = (event: KeyboardEvent) => {
@@ -215,11 +238,30 @@
     path.split(/[/\\]/).filter(Boolean).pop() ?? path;
 
   onMount(() => {
-    try {
-      appWindow = getCurrentWindow();
-    } catch (err) {
-      surfaceIssue(err, "Window integration could not be initialized.");
-    }
+    const initializeApp = async () => {
+      try {
+        appWindow = getCurrentWindow();
+        await appWindow.setResizable(true);
+        await appWindow.setMaximizable(true);
+      } catch (err) {
+        surfaceIssue(err, "Window integration could not be initialized.");
+      }
+
+      try {
+        applyThemePreference(await getSavedTheme());
+      } catch (err) {
+        surfaceIssue(err, "Could not restore your theme.");
+      }
+
+      try {
+        const savedVaultPath = await getLastVaultPath();
+        if (savedVaultPath) {
+          await restoreVault(savedVaultPath);
+        }
+      } catch (err) {
+        surfaceIssue(err, "Could not restore your last vault.");
+      }
+    };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
@@ -294,6 +336,12 @@
       },
       { key: "f2", handler: wrap(() => renameFocused()) },
       { key: "delete", handler: wrap(() => deleteFocused()) },
+      {
+        key: "f11",
+        handler: () => {
+          void toggleFullscreenWindow();
+        },
+      },
       { key: "escape", handler: () => closeOverlays(), preventDefault: false },
     ]);
 
@@ -310,6 +358,7 @@
     window.addEventListener("resize", handleResize);
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
     window.addEventListener("error", handleRuntimeError);
+    void initializeApp();
     handleResize();
 
     return () => {
@@ -380,6 +429,13 @@
       </button>
       <button type="button" class="utility-btn" on:click={toggleSettings}>
         Settings
+      </button>
+      <button
+        type="button"
+        class="utility-btn"
+        on:click={() => void toggleFullscreenWindow()}
+      >
+        Full screen
       </button>
 
       <div class="window-buttons">
@@ -488,7 +544,9 @@
     </div>
   </footer>
 
-  <Settings open={$uiState.settingsOpen} />
+  {#if $uiState.settingsOpen}
+    <Settings open={$uiState.settingsOpen} />
+  {/if}
   <SearchModal open={$uiState.searchOpen} mode={$uiState.searchMode} />
   <CommandPalette open={$uiState.commandOpen} />
   <DrawingCanvas />
@@ -556,8 +614,8 @@
     grid-template-rows: 72px 1fr 40px;
     height: 100%;
     background:
-      radial-gradient(circle at top left, rgba(88, 193, 255, 0.12), transparent 32%),
-      radial-gradient(circle at top right, rgba(126, 240, 197, 0.08), transparent 22%),
+      radial-gradient(circle at top left, var(--accent-gradient-start), transparent 32%),
+      radial-gradient(circle at top right, var(--accent-gradient-end), transparent 22%),
       linear-gradient(180deg, rgba(7, 10, 18, 0.95), rgba(8, 13, 23, 0.98));
   }
 
@@ -588,7 +646,7 @@
     border-radius: 14px;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     color: #04111c;
-    box-shadow: 0 10px 30px rgba(88, 193, 255, 0.24);
+    box-shadow: 0 10px 30px var(--accent-shadow);
   }
 
   .brand-copy {
@@ -646,7 +704,7 @@
   .utility-btn {
     padding: 0 14px;
     border-radius: 12px;
-    background: rgba(17, 27, 43, 0.82);
+    background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
   }
@@ -662,7 +720,7 @@
     display: grid;
     place-items: center;
     border-radius: 10px;
-    background: rgba(17, 27, 43, 0.82);
+    background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
   }
 
@@ -674,7 +732,7 @@
   .panel-shell {
     position: relative;
     overflow: hidden;
-    background: rgba(9, 14, 25, 0.72);
+    background: var(--glass);
     backdrop-filter: blur(18px);
   }
 
@@ -705,7 +763,7 @@
 
   .resizer:hover {
     background: var(--accent-subtle);
-    box-shadow: 0 0 0 1px rgba(88, 193, 255, 0.2);
+    box-shadow: 0 0 0 1px var(--accent-glow);
   }
 
   .left .resizer {
@@ -731,11 +789,7 @@
     gap: var(--space-4);
     padding: var(--space-4) var(--space-5) var(--space-3);
     border-bottom: 1px solid var(--border-subtle);
-    background: linear-gradient(
-      180deg,
-      rgba(16, 24, 38, 0.78),
-      rgba(11, 17, 29, 0.34)
-    );
+    background: linear-gradient(180deg, var(--glass), transparent);
   }
 
   .workspace-copy {
@@ -773,7 +827,7 @@
   }
 
   .workspace-actions .ghost {
-    background: rgba(15, 24, 39, 0.76);
+    background: var(--bg-surface);
     border-color: var(--border-subtle);
     color: var(--text-secondary);
     padding: 0 14px;
@@ -816,13 +870,13 @@
     padding: 5px 10px;
     border-radius: 999px;
     border: 1px solid var(--border-subtle);
-    background: rgba(14, 22, 36, 0.8);
+    background: var(--bg-surface);
     color: inherit;
     white-space: nowrap;
   }
 
   .status-pill.accent {
-    border-color: rgba(88, 193, 255, 0.22);
+    border-color: var(--accent-glow);
     color: var(--accent-bright);
   }
 
@@ -835,8 +889,8 @@
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(circle at top, rgba(88, 193, 255, 0.12), transparent 28%),
-      rgba(3, 7, 14, 0.72);
+      radial-gradient(circle at top, var(--accent-gradient-start), transparent 28%),
+      var(--overlay);
     display: grid;
     place-items: center;
     z-index: 30;
@@ -847,9 +901,8 @@
     width: min(580px, calc(100vw - 40px));
     padding: clamp(28px, 5vw, 42px);
     border-radius: 28px;
-    border: 1px solid rgba(120, 158, 212, 0.18);
-    background:
-      linear-gradient(180deg, rgba(20, 29, 45, 0.96), rgba(12, 18, 30, 0.98));
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--bg-surface), var(--bg-panel));
     box-shadow:
       0 24px 80px rgba(0, 0, 0, 0.45),
       inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -865,7 +918,7 @@
     border-radius: 20px;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     color: #04111c;
-    box-shadow: 0 12px 40px rgba(88, 193, 255, 0.24);
+    box-shadow: 0 12px 40px var(--accent-shadow);
   }
 
   .onboarding h2 {
@@ -895,7 +948,7 @@
     padding: 7px 12px;
     border-radius: 999px;
     border: 1px solid var(--border-subtle);
-    background: rgba(14, 22, 36, 0.8);
+    background: var(--bg-surface);
     color: var(--text-secondary);
     font-size: 12px;
   }
@@ -922,7 +975,7 @@
   }
 
   .actions .ghost {
-    background: rgba(14, 22, 36, 0.78);
+    background: var(--bg-surface);
     border-color: var(--border);
     color: var(--text-primary);
   }
@@ -941,8 +994,8 @@
     max-width: 340px;
     padding: 12px 14px;
     border-radius: 16px;
-    background: rgba(13, 20, 33, 0.94);
-    border: 1px solid rgba(88, 193, 255, 0.22);
+    background: var(--bg-surface);
+    border: 1px solid var(--accent-glow);
     color: var(--text-primary);
     box-shadow: var(--shadow-soft);
   }

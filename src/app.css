@@ -3,26 +3,32 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
-  --bg-base: #0b1220;
-  --bg-panel: rgba(10, 16, 29, 0.92);
-  --bg-surface: rgba(19, 28, 46, 0.96);
-  --bg-elevated: #162238;
-  --glass: rgba(8, 14, 25, 0.78);
-  --border: rgba(125, 154, 204, 0.2);
-  --border-focus: #58c1ff;
-  --border-subtle: rgba(125, 154, 204, 0.12);
-  --text-primary: #eef4ff;
-  --text-secondary: #9fb1d3;
-  --text-muted: #63728e;
-  --accent: #58c1ff;
-  --accent-bright: #9ae6ff;
-  --accent-subtle: rgba(88, 193, 255, 0.16);
-  --accent-glow: rgba(88, 193, 255, 0.1);
-  --accent2: #7ef0c5;
-  --accent2-subtle: rgba(126, 240, 197, 0.15);
-  --success: #77d49d;
-  --warning: #f3c56a;
-  --danger: #ff8b91;
+  --bg-base: #17120e;
+  --bg-panel: rgba(23, 18, 14, 0.94);
+  --bg-surface: rgba(34, 26, 20, 0.96);
+  --bg-elevated: #271e18;
+  --glass: rgba(19, 14, 11, 0.82);
+  --border: rgba(203, 151, 96, 0.2);
+  --border-focus: #d89a52;
+  --border-subtle: rgba(203, 151, 96, 0.12);
+  --text-primary: #f3e7d7;
+  --text-secondary: #cdb198;
+  --text-muted: #8e745d;
+  --accent: #d89a52;
+  --accent-bright: #f0c184;
+  --accent-subtle: rgba(216, 154, 82, 0.16);
+  --accent-glow: rgba(216, 154, 82, 0.1);
+  --accent2: #9bb58f;
+  --accent2-subtle: rgba(155, 181, 143, 0.15);
+  --focus-ring: rgba(216, 154, 82, 0.18);
+  --scrollbar-thumb: rgba(216, 154, 82, 0.24);
+  --scrollbar-thumb-hover: rgba(216, 154, 82, 0.38);
+  --accent-shadow: rgba(216, 154, 82, 0.24);
+  --accent-gradient-start: rgba(216, 154, 82, 0.16);
+  --accent-gradient-end: rgba(155, 181, 143, 0.1);
+  --success: #87b07f;
+  --warning: #f0bc63;
+  --danger: #e18a7b;
   --font-ui: "Space Grotesk", "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", "Cascadia Code", monospace;
   --font-editor: "Source Serif 4", Georgia, serif;
@@ -41,7 +47,7 @@
   --overlay: rgba(3, 7, 14, 0.66);
   --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.28);
   --shadow-strong: 0 24px 70px rgba(0, 0, 0, 0.44);
-  scrollbar-color: rgba(125, 154, 204, 0.24) transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
   scrollbar-width: thin;
 }
 
@@ -63,6 +69,12 @@
   --accent-glow: rgba(215, 128, 47, 0.08);
   --accent2: #4cae8b;
   --accent2-subtle: rgba(76, 174, 139, 0.14);
+  --focus-ring: rgba(215, 128, 47, 0.18);
+  --scrollbar-thumb: rgba(215, 128, 47, 0.24);
+  --scrollbar-thumb-hover: rgba(215, 128, 47, 0.36);
+  --accent-shadow: rgba(215, 128, 47, 0.18);
+  --accent-gradient-start: rgba(215, 128, 47, 0.14);
+  --accent-gradient-end: rgba(76, 174, 139, 0.12);
   --success: #4caa7d;
   --warning: #cb9533;
   --danger: #cb5b5b;
@@ -86,6 +98,12 @@
   --accent-glow: rgba(102, 182, 255, 0.1);
   --accent2: #5ee0c5;
   --accent2-subtle: rgba(94, 224, 197, 0.14);
+  --focus-ring: rgba(102, 182, 255, 0.18);
+  --scrollbar-thumb: rgba(125, 154, 204, 0.24);
+  --scrollbar-thumb-hover: rgba(125, 154, 204, 0.38);
+  --accent-shadow: rgba(88, 193, 255, 0.24);
+  --accent-gradient-start: rgba(88, 193, 255, 0.16);
+  --accent-gradient-end: rgba(94, 224, 197, 0.1);
 }
 
 * {
@@ -109,9 +127,9 @@ body {
   font-size: 14px;
   line-height: 1.5;
   background:
-    radial-gradient(circle at top left, rgba(88, 193, 255, 0.14), transparent 28%),
-    radial-gradient(circle at 78% 0%, rgba(126, 240, 197, 0.08), transparent 22%),
-    linear-gradient(180deg, #09101a 0%, #0b1220 100%);
+    radial-gradient(circle at top left, rgba(216, 154, 82, 0.16), transparent 30%),
+    radial-gradient(circle at 82% 0%, rgba(155, 181, 143, 0.1), transparent 24%),
+    linear-gradient(180deg, #140f0c 0%, #17120e 100%);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -171,7 +189,7 @@ textarea:focus-visible,
 select:focus-visible {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(88, 193, 255, 0.18);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 code,
@@ -193,13 +211,13 @@ pre {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(125, 154, 204, 0.24);
+  background: var(--scrollbar-thumb);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(125, 154, 204, 0.38);
+  background: var(--scrollbar-thumb-hover);
   background-clip: padding-box;
 }

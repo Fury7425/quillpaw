@@ -1,10 +1,10 @@
 import { get, writable } from "svelte/store";
 import { listen } from "@tauri-apps/api/event";
-import { load } from "@tauri-apps/plugin-store";
 
 import type { FileNode } from "$lib/types";
 import { tauriInvoke } from "$lib/utils/tauri_bridge";
 import { pushToast } from "$lib/stores/ui";
+import { setLastVaultPath } from "$lib/stores/preferences";
 
 export const vaultPath = writable<string>("");
 export const fileTree = writable<FileNode[]>([]);
@@ -15,42 +15,85 @@ export const renameRequest = writable<string | null>(null);
 let unlistenVault: (() => void) | null = null;
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 
+const formatError = (err: unknown) =>
+  err instanceof Error ? err.message : String(err);
+
+const isMissingVaultError = (message: string) =>
+  message.includes("no longer exists") || message.includes("not a folder");
+
+const persistLastVaultPath = async (path: string | null) => {
+  try {
+    await setLastVaultPath(path);
+  } catch (err) {
+    pushToast(formatError(err) || "Could not remember that vault.");
+  }
+};
+
+const rebuildKeywordIndex = (path: string) => {
+  void tauriInvoke("build_search_index", { vaultPath: path }).catch(() => null);
+};
+
+const activateVault = async (path: string) => {
+  vaultPath.set(path);
+  await refreshTree();
+  rebuildKeywordIndex(path);
+  try {
+    await startWatcherListener();
+  } catch (err) {
+    pushToast(formatError(err) || "Live vault sync is unavailable right now.");
+  }
+};
+
+const clearVaultState = async (forgetLastVault = false) => {
+  vaultPath.set("");
+  fileTree.set([]);
+  focusedPath.set(null);
+  focusedIsFolder.set(false);
+  renameRequest.set(null);
+  if (forgetLastVault) {
+    await persistLastVaultPath(null);
+  }
+};
+
 export async function openVault(): Promise<void> {
   try {
     const path = await tauriInvoke<string>("open_vault");
-    vaultPath.set(path);
-    await refreshTree();
-    await tauriInvoke("build_search_index", { vaultPath: path });
-    tauriInvoke("build_embeddings", { vaultPath: path }).catch(() => null);
-    const store = await load(`${path}/.quillpaw/config.json`);
-    await store.set("vaultPath", path);
-    await store.save();
-    await startWatcher();
+    await activateVault(path);
+    await persistLastVaultPath(path);
   } catch (err) {
-    pushToast(err instanceof Error ? err.message : String(err));
+    pushToast(formatError(err));
+  }
+}
+
+export async function restoreVault(path: string): Promise<boolean> {
+  try {
+    const restoredPath = await tauriInvoke<string>("restore_vault", {
+      vaultPath: path,
+    });
+    await activateVault(restoredPath);
+    await persistLastVaultPath(restoredPath);
+    return true;
+  } catch (err) {
+    const message = formatError(err) || "Could not restore the last vault.";
+    await clearVaultState(isMissingVaultError(message));
+    pushToast(message);
+    return false;
   }
 }
 
 export async function createVault(): Promise<void> {
   try {
     const path = await tauriInvoke<string>("open_vault");
-    vaultPath.set(path);
-    // Create sample Welcome.md note
     await tauriInvoke("create_note", {
       vaultPath: path,
       folder: "",
       title: "Welcome",
     });
-    await refreshTree();
-    await tauriInvoke("build_search_index", { vaultPath: path });
-    tauriInvoke("build_embeddings", { vaultPath: path }).catch(() => null);
-    const store = await load(`${path}/.quillpaw/config.json`);
-    await store.set("vaultPath", path);
-    await store.save();
-    await startWatcher();
-    pushToast("Vault created! Start writing.");
+    await activateVault(path);
+    await persistLastVaultPath(path);
+    pushToast("Vault created! Start writing.", "info");
   } catch (err) {
-    pushToast(err instanceof Error ? err.message : String(err));
+    pushToast(formatError(err));
   }
 }
 
@@ -63,7 +106,7 @@ export async function refreshTree(): Promise<void> {
     });
     fileTree.set(tree);
   } catch (err) {
-    pushToast(err instanceof Error ? err.message : String(err));
+    pushToast(formatError(err));
   }
 }
 
@@ -82,7 +125,7 @@ export async function createNote(
     await refreshTree();
     return created;
   } catch (err) {
-    pushToast(err instanceof Error ? err.message : String(err));
+    pushToast(formatError(err));
     return null;
   }
 }
@@ -97,7 +140,7 @@ export async function createFolder(relativePath: string): Promise<void> {
     });
     await refreshTree();
   } catch (err) {
-    pushToast(err instanceof Error ? err.message : String(err));
+    pushToast(formatError(err));
   }
 }
 
@@ -109,7 +152,7 @@ export async function renameItem(
     await tauriInvoke("rename_item", { oldPath, newName });
     await refreshTree();
   } catch (err) {
-    pushToast(err instanceof Error ? err.message : String(err));
+    pushToast(formatError(err));
   }
 }
 
@@ -118,7 +161,7 @@ export async function deleteItem(path: string): Promise<void> {
     await tauriInvoke("delete_item", { path });
     await refreshTree();
   } catch (err) {
-    pushToast(err instanceof Error ? err.message : String(err));
+    pushToast(formatError(err));
   }
 }
 
@@ -134,20 +177,18 @@ export function toVaultRelative(path: string, vault: string): string {
   return path;
 }
 
-async function startWatcher(): Promise<void> {
+async function startWatcherListener(): Promise<void> {
   if (unlistenVault) {
-    unlistenVault();
-    unlistenVault = null;
+    return;
   }
+
   unlistenVault = await listen<string[]>("vault-changed", async () => {
     if (refreshTimer) clearTimeout(refreshTimer);
     refreshTimer = setTimeout(async () => {
-      await refreshTree();
       const path = get(vaultPath);
-      if (path) {
-        await tauriInvoke("build_search_index", { vaultPath: path });
-        tauriInvoke("build_embeddings", { vaultPath: path }).catch(() => null);
-      }
-    }, 400);
+      if (!path) return;
+      await refreshTree();
+      rebuildKeywordIndex(path);
+    }, 300);
   });
 }

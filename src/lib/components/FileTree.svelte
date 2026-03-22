@@ -209,11 +209,7 @@
   .panel {
     height: 100%;
     padding: var(--space-4);
-    background: linear-gradient(
-      180deg,
-      rgba(18, 27, 43, 0.64),
-      rgba(11, 17, 29, 0.4)
-    );
+    background: linear-gradient(180deg, var(--bg-panel), var(--glass));
   }
   .header {
     display: flex;
@@ -242,7 +238,7 @@
     padding: 6px 10px;
     border-radius: 999px;
     border: 1px solid var(--border-subtle);
-    background: rgba(14, 22, 36, 0.78);
+    background: var(--bg-surface);
     color: var(--text-secondary);
     font-size: 12px;
     white-space: nowrap;
@@ -254,7 +250,7 @@
   .context {
     position: fixed;
     min-width: 168px;
-    background: rgba(16, 24, 39, 0.96);
+    background: var(--bg-panel);
     border: 1px solid var(--border);
     border-radius: 18px;
     padding: var(--space-2);
@@ -264,7 +260,7 @@
     box-shadow: var(--shadow-soft);
   }
   .context button {
-    background: rgba(14, 22, 36, 0.78);
+    background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
     padding: 10px 12px;
     text-align: left;
