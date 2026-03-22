@@ -130,6 +130,9 @@
             ...downloadMap,
             [event.payload.model_id]: event.payload,
           };
+          if (event.payload.error) {
+            pushToast(event.payload.error);
+          }
           if (event.payload.done && event.payload.path) {
             aiModelPath.set(event.payload.path);
             void persistConfigValue("aiModelPath", event.payload.path);

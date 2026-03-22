@@ -248,36 +248,74 @@ pub async fn download_model(
         .await
         .map_err(|e| e.to_string())?;
     let target_path = target_dir.join(&spec.filename);
+    let partial_path = target_dir.join(format!("{}.part", &spec.filename));
+    let _ = tokio::fs::remove_file(&partial_path).await;
     let client = reqwest::Client::new();
     let response = client
         .get(&spec.url)
         .send()
         .await
-        .map_err(|e| e.to_string())?
+        .map_err(|e| format!("Could not reach the model host: {e}"))?
         .error_for_status()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format_download_error(model_id, &spec.url, e))?;
     let total = response.content_length();
-    let mut file = tokio::fs::File::create(&target_path)
-        .await
-        .map_err(|e| e.to_string())?;
     let mut downloaded: u64 = 0;
     let mut stream = response.bytes_stream();
-    while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|e| e.to_string())?;
-        file.write_all(&chunk).await.map_err(|e| e.to_string())?;
-        downloaded += chunk.len() as u64;
+
+    let result: Result<(), String> = async {
+        let mut file = tokio::fs::File::create(&partial_path)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        while let Some(chunk) = stream.next().await {
+            let chunk = chunk.map_err(|e| e.to_string())?;
+            file.write_all(&chunk).await.map_err(|e| e.to_string())?;
+            downloaded += chunk.len() as u64;
+            emit_download_progress(
+                &app,
+                ModelDownloadProgress {
+                    model_id: model_id.to_string(),
+                    downloaded,
+                    total,
+                    done: false,
+                    path: None,
+                    error: None,
+                },
+            )?;
+        }
+
+        file.flush().await.map_err(|e| e.to_string())?;
+
+        if tokio::fs::metadata(&target_path).await.is_ok() {
+            tokio::fs::remove_file(&target_path)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+
+        tokio::fs::rename(&partial_path, &target_path)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        Ok(())
+    }
+    .await;
+
+    if let Err(err) = result {
+        let _ = tokio::fs::remove_file(&partial_path).await;
         emit_download_progress(
             &app,
             ModelDownloadProgress {
                 model_id: model_id.to_string(),
                 downloaded,
                 total,
-                done: false,
+                done: true,
                 path: None,
-                error: None,
+                error: Some(err.clone()),
             },
         )?;
+        return Err(err);
     }
+
     emit_download_progress(
         &app,
         ModelDownloadProgress {
@@ -333,7 +371,7 @@ fn resolve_model_spec(model_id: &str, custom_url: Option<String>) -> Result<Mode
         (
             "qwen2.5-1.5b",
             "qwen2.5-1.5b.gguf",
-            "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf",
+            "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf",
         ),
     ];
     if let Some(url) = custom_url {
@@ -358,6 +396,18 @@ fn resolve_model_spec(model_id: &str, custom_url: Option<String>) -> Result<Mode
         }
     }
     Err("Unknown model id.".to_string())
+}
+
+fn format_download_error(model_id: &str, url: &str, err: reqwest::Error) -> String {
+    match err.status() {
+        Some(reqwest::StatusCode::NOT_FOUND) => {
+            format!(
+                "Quillpaw could not find the current download file for {model_id}. The preset URL returned 404: {url}"
+            )
+        }
+        Some(status) => format!("Could not download {model_id} ({status}): {err}"),
+        None => format!("Could not download {model_id}: {err}"),
+    }
 }
 
 fn emit_download_progress(app: &AppHandle, progress: ModelDownloadProgress) -> Result<(), String> {
