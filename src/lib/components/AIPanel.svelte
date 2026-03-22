@@ -145,28 +145,40 @@
 
 <style>
   .panel {
-    padding: var(--space-3);
+    padding: var(--space-4);
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: var(--space-4);
   }
   h3 {
     margin: 0;
+    font-size: 20px;
+    letter-spacing: -0.03em;
   }
   .status {
     color: var(--text-secondary);
     margin: 0;
   }
+  .section {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border-radius: 20px;
+    border: 1px solid var(--border-subtle);
+    background: rgba(17, 26, 42, 0.72);
+    box-shadow: var(--shadow-soft);
+  }
   .section h4 {
-    margin: 0 0 var(--space-2);
-    color: var(--text-secondary);
+    margin: 0;
+    color: var(--text-primary);
   }
   .muted {
     color: var(--text-muted);
   }
   button {
     width: 100%;
-    margin-bottom: var(--space-2);
+    min-height: 40px;
+    margin-bottom: var(--space-1);
   }
   .field {
     display: grid;

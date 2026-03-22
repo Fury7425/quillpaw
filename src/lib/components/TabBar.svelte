@@ -38,23 +38,36 @@
   .tabbar {
     display: flex;
     gap: var(--space-1);
-    padding: var(--space-2);
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-panel);
+    padding: var(--space-3) var(--space-4) var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(11, 17, 29, 0.52);
     overflow-x: auto;
   }
   .tab {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    padding: 4px 10px;
-    background: var(--bg-surface);
+    padding: 8px 12px;
+    background: rgba(16, 24, 39, 0.74);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
+    border-radius: 14px;
     cursor: pointer;
+    transition:
+      border-color var(--transition),
+      background var(--transition),
+      transform var(--transition);
+  }
+  .tab:hover {
+    transform: translateY(-1px);
+    border-color: var(--border);
   }
   .tab.active {
-    border-color: var(--accent);
+    border-color: rgba(88, 193, 255, 0.22);
+    background: linear-gradient(
+      135deg,
+      rgba(88, 193, 255, 0.14),
+      rgba(126, 240, 197, 0.08)
+    );
   }
   .title {
     max-width: 160px;
@@ -66,13 +79,15 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--accent);
+    background: var(--accent-bright);
   }
   .close {
     display: grid;
     place-items: center;
-    width: 16px;
-    height: 16px;
-    border-radius: var(--radius-sm);
+    width: 22px;
+    height: 22px;
+    border-radius: 10px;
+    background: transparent;
+    border-color: transparent;
   }
 </style>

@@ -20,7 +20,8 @@
     if (e.key === "Enter") {
       onRenameCommit(inputVal.trim());
     } else if (e.key === "Escape") {
-      editing = false;
+      inputVal = node.name;
+      onRenameCommit(node.name);
     }
   };
 
@@ -86,27 +87,42 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--space-2);
-    border-left: 3px solid transparent;
-    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 14px;
     cursor: pointer;
+    transition:
+      border-color var(--transition),
+      background var(--transition),
+      transform var(--transition);
+  }
+  .row:hover {
+    background: rgba(15, 24, 39, 0.62);
+    border-color: var(--border-subtle);
+    transform: translateX(2px);
   }
   input {
-    background: var(--bg-surface);
+    background: rgba(13, 21, 35, 0.92);
     border: 1px solid var(--accent);
     color: var(--text-primary);
     font-family: inherit;
     font-size: inherit;
-    padding: 0 4px;
+    padding: 6px 8px;
     width: 100%;
     border-radius: var(--radius-xs);
   }
   .row.active {
-    border-left-color: var(--accent);
-    background: var(--accent-subtle);
+    border-color: rgba(88, 193, 255, 0.2);
+    background: linear-gradient(
+      135deg,
+      rgba(88, 193, 255, 0.14),
+      rgba(126, 240, 197, 0.08)
+    );
   }
   .children {
-    margin-left: var(--space-3);
+    margin-left: var(--space-4);
+    padding-left: var(--space-2);
+    border-left: 1px solid rgba(125, 154, 204, 0.12);
   }
   .folder-icon {
     color: var(--accent2);

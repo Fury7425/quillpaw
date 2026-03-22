@@ -39,19 +39,27 @@
     }
   };
 
-  onMount(async () => {
-    unlisten = await listen<{ text: string; is_final: boolean }>(
-      "stt-text-chunk",
-      (event) => {
-        const text = event.payload.text.trim();
-        if (!text) return;
-        transcript = `${transcript} ${text}`.trim();
-        requestInsert(`${text} `);
-      },
-    );
-    if (!get(sttActive)) {
-      start();
-    }
+  onMount(() => {
+    const setup = async () => {
+      try {
+        unlisten = await listen<{ text: string; is_final: boolean }>(
+          "stt-text-chunk",
+          (event) => {
+            const text = event.payload.text.trim();
+            if (!text) return;
+            transcript = `${transcript} ${text}`.trim();
+            requestInsert(`${text} `);
+          },
+        );
+        if (!get(sttActive)) {
+          await start();
+        }
+      } catch (err) {
+        pushToast(err instanceof Error ? err.message : String(err));
+      }
+    };
+
+    void setup();
   });
 
   onDestroy(() => {

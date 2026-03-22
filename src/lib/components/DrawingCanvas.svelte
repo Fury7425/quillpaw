@@ -3,6 +3,7 @@
   import { uiState, closeDrawing } from "$lib/stores/ui";
   import { vaultPath } from "$lib/stores/vault";
   import { tauriInvoke } from "$lib/utils/tauri_bridge";
+  import { pushToast } from "$lib/stores/ui";
 
   type StrokePoint = [number, number, number];
   type Stroke = {
@@ -78,7 +79,11 @@
     if (!drawing) return;
     drawing = false;
     currentStroke = null;
-    await saveDrawing();
+    try {
+      await saveDrawing();
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : String(err));
+    }
   };
 
   const drawStrokeSegment = (stroke: Stroke) => {

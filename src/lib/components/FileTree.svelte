@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import TreeNode from "$lib/components/TreeNode.svelte";
   import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
   import type { FileNode } from "$lib/types";
@@ -16,6 +17,7 @@
     renameRequest,
   } from "$lib/stores/vault";
   import { openNote } from "$lib/stores/editor";
+  import { pushToast } from "$lib/stores/ui";
 
   let expanded = new Set<string>();
   let contextOpen = false;
@@ -26,11 +28,18 @@
   let deleteMessage = "";
   let editingPath: string | null = null;
 
-  renameRequest.subscribe((path) => {
+  const formatError = (err: unknown) =>
+    err instanceof Error ? err.message : String(err);
+
+  const unsubscribeRename = renameRequest.subscribe((path) => {
     if (path) {
       editingPath = path;
       renameRequest.set(null);
     }
+  });
+
+  onDestroy(() => {
+    unsubscribeRename();
   });
 
   const toggleFolder = (path: string) => {
@@ -57,11 +66,10 @@
     contextNode = null;
   };
 
-  const handlePanelKeydown = (event: KeyboardEvent) => {
-    if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      closeContext();
-    }
+  const handleWindowClick = (event: MouseEvent) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest(".context")) return;
+    closeContext();
   };
 
   const parentFolder = (path: string) => {
@@ -70,17 +78,24 @@
     return parts.join("/");
   };
 
+  const fileName = (path: string) => path.split(/[/\\]/).pop() ?? path;
+
   const handleCreateNote = async () => {
     const title = window.prompt("Note title");
     if (!title) return closeContext();
     const vault = $vaultPath;
     if (!vault) return closeContext();
-    const target = contextNode?.path ?? vault;
-    const base = contextNode?.is_folder ? target : parentFolder(target);
-    const folder = toVaultRelative(base, vault);
-    const path = await createNote(folder, title);
-    if (path) openNote(path);
-    closeContext();
+    try {
+      const target = contextNode?.path ?? vault;
+      const base = contextNode?.is_folder ? target : parentFolder(target);
+      const folder = toVaultRelative(base, vault);
+      const path = await createNote(folder, title);
+      if (path) openNote(path);
+    } catch (err) {
+      pushToast(formatError(err) || "Could not create that note.");
+    } finally {
+      closeContext();
+    }
   };
 
   const handleCreateFolder = async () => {
@@ -88,12 +103,17 @@
     if (!name) return closeContext();
     const vault = $vaultPath;
     if (!vault) return closeContext();
-    const target = contextNode?.path ?? vault;
-    const base = contextNode?.is_folder ? target : parentFolder(target);
-    const relative = toVaultRelative(base, vault);
-    const folderPath = relative ? `${relative}/${name}` : name;
-    await createFolder(folderPath);
-    closeContext();
+    try {
+      const target = contextNode?.path ?? vault;
+      const base = contextNode?.is_folder ? target : parentFolder(target);
+      const relative = toVaultRelative(base, vault);
+      const folderPath = relative ? `${relative}/${name}` : name;
+      await createFolder(folderPath);
+    } catch (err) {
+      pushToast(formatError(err) || "Could not create that folder.");
+    } finally {
+      closeContext();
+    }
   };
 
   const handleRename = () => {
@@ -103,9 +123,17 @@
   };
 
   const handleRenameCommit = async (newName: string) => {
-    if (editingPath && newName && newName !== contextNode?.name) {
-      await renameItem(editingPath, newName);
+    if (!editingPath || !newName || newName === fileName(editingPath)) {
+      editingPath = null;
+      return;
     }
+
+    try {
+      await renameItem(editingPath, newName);
+    } catch (err) {
+      pushToast(formatError(err) || "Could not rename that item.");
+    }
+
     editingPath = null;
   };
 
@@ -117,10 +145,15 @@
   };
 
   const onConfirmDelete = async () => {
-    if (contextNode) {
-      await deleteItem(contextNode.path);
+    try {
+      if (contextNode) {
+        await deleteItem(contextNode.path);
+      }
+    } catch (err) {
+      pushToast(formatError(err) || "Could not delete that item.");
+    } finally {
+      deleteDialogOpen = false;
     }
-    deleteDialogOpen = false;
   };
 
   const onCancelDelete = () => {
@@ -128,15 +161,14 @@
   };
 </script>
 
-<div
-  class="panel"
-  role="button"
-  tabindex="0"
-  on:click={closeContext}
-  on:keydown={handlePanelKeydown}
->
+<svelte:window on:click={handleWindowClick} />
+
+<section class="panel">
   <div class="header">
-    <h3>Vault</h3>
+    <div>
+      <div class="eyebrow">Library</div>
+      <h3>Vault</h3>
+    </div>
     {#if $focusedPath}
       <span class="focus"
         >{($focusedIsFolder ? "Folder" : "File") + " selected"}</span
@@ -155,7 +187,7 @@
       />
     {/each}
   </div>
-</div>
+</section>
 
 <ConfirmDialog
   open={deleteDialogOpen}
@@ -175,40 +207,71 @@
 
 <style>
   .panel {
-    padding: var(--space-3);
+    height: 100%;
+    padding: var(--space-4);
+    background: linear-gradient(
+      180deg,
+      rgba(18, 27, 43, 0.64),
+      rgba(11, 17, 29, 0.4)
+    );
   }
   .header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    margin-bottom: var(--space-2);
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .eyebrow {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
   }
   h3 {
     margin: 0;
-    color: var(--text-secondary);
+    color: var(--text-primary);
+    font-size: 18px;
+    letter-spacing: -0.03em;
   }
   .focus {
-    font-size: 11px;
-    color: var(--text-muted);
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    background: rgba(14, 22, 36, 0.78);
+    color: var(--text-secondary);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .tree {
+    display: grid;
+    gap: 4px;
   }
   .context {
     position: fixed;
-    background: var(--bg-elevated);
+    min-width: 168px;
+    background: rgba(16, 24, 39, 0.96);
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-radius: 18px;
     padding: var(--space-2);
     display: grid;
     gap: var(--space-1);
     z-index: 50;
+    box-shadow: var(--shadow-soft);
   }
   .context button {
-    background: transparent;
+    background: rgba(14, 22, 36, 0.78);
     border: 1px solid var(--border-subtle);
-    padding: 6px 8px;
+    padding: 10px 12px;
     text-align: left;
+    color: var(--text-primary);
   }
   .context .danger {
-    border-color: var(--danger);
+    border-color: rgba(255, 139, 145, 0.26);
     color: var(--danger);
   }
 </style>
